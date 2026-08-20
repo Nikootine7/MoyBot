@@ -86,6 +86,6 @@ def test_different_mints_cannot_be_diffed() -> None:
 def test_flatten_covers_every_metric_field() -> None:
     paths = flatten_metrics(metrics())
     for field in dataclasses.fields(TokenMetrics):
-        assert any(
-            path == field.name or path.startswith(f"{field.name}.") for path in paths
-        ), f"metric field {field.name} is not covered by the differ"
+        assert any(path == field.name or path.startswith(f"{field.name}.") for path in paths), (
+            f"metric field {field.name} is not covered by the differ"
+        )
