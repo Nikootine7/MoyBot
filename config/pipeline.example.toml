@@ -1,0 +1,53 @@
+# MOYBOT Phase 1 example configuration.
+#
+# Every domain value that PROJECT_SPEC.md §9 lists as not final is commented out below. With a
+# value commented out, the affected component reports "not configured" and nothing advances.
+# That is intentional: a placeholder number here would become a de-facto requirement, which
+# PROJECT_SPEC.md §10.3 rejects.
+
+[storage]
+data_dir = "./.moybot-data"
+
+[logging]
+level = "INFO"
+
+[heavy_analysis]
+# Heavy-analysis modules are declared-only stubs in Phase 1. Enabling one raises an error
+# instead of returning a fabricated feature. Available names are the PROJECT_SPEC.md §3
+# categories: cluster_graph_analysis, funding_source_analysis, wallet_relationship_analysis,
+# influencer_correlation, wash_trading_detection, contract_analysis, historical_behavior,
+# social_signals.
+enabled_modules = []
+
+[strategies.bot_a]
+enabled = true
+# OPEN QUESTION (PROJECT_SPEC.md §6, §9): Bot A's confidence requirement.
+# score_threshold = <undecided>
+# OPEN QUESTION (PROJECT_SPEC.md §9): scoring weights, per feature name.
+# [strategies.bot_a.weights]
+# <feature_name> = <undecided>
+
+[strategies.bot_b]
+enabled = true
+# OPEN QUESTION (PROJECT_SPEC.md §7, §9): Bot B's gate. It is independent of Bot A's and is
+# explicitly not "Bot A with a lower threshold".
+# score_threshold = <undecided>
+# [strategies.bot_b.weights]
+# <feature_name> = <undecided>
+
+# OPEN QUESTION (PROJECT_SPEC.md §9): acceptable staleness, and the latency target it follows
+# from. Absent this section, validation cancels every candidate.
+# [validation.staleness]
+# max_snapshot_age_ms = <undecided>
+# max_slot_lag = <undecided>
+
+# OPEN QUESTION (PROJECT_SPEC.md §5, §9): what counts as material deterioration. Absent this
+# section, validation cancels every candidate.
+# [validation.deterioration]
+# max_price_drop_fraction = <undecided>
+# max_liquidity_drop_fraction = <undecided>
+# max_slippage_bps = <undecided>
+# max_sell_pressure_ratio = <undecided>
+# cancel_on_dev_sold = <undecided>
+# cancel_on_smart_wallet_exit = <undecided>
+# cancel_on_lp_supply_change = <undecided>

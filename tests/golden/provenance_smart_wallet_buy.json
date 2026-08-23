@@ -1,0 +1,124 @@
+[
+  {
+    "correlation_id": "replay:smart_wallet_buy:1:0",
+    "detail": {
+      "detectors": [
+        "declared_events"
+      ],
+      "source": "replay:smart_wallet_buy"
+    },
+    "duration_us": 1,
+    "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "occurred_at_ms": 1750000000000,
+    "outcome": "smart_wallet_buy",
+    "record_id": "replay:smart_wallet_buy:1:0:001:event_trigger",
+    "slot": 101,
+    "stage": "event_trigger"
+  },
+  {
+    "correlation_id": "replay:smart_wallet_buy:1:0",
+    "detail": {
+      "changed_paths": [
+        "buy_volume",
+        "liquidity",
+        "price",
+        "price_change",
+        "sell_volume",
+        "slippage_bps",
+        "smart_wallet_addresses.length",
+        "smart_wallet_addresses[1]",
+        "smart_wallet_transaction_count",
+        "volume"
+      ],
+      "from_slot": 100,
+      "to_slot": 101
+    },
+    "duration_us": 1,
+    "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "occurred_at_ms": 1750000000000,
+    "outcome": "changed",
+    "record_id": "replay:smart_wallet_buy:1:0:002:delta_analysis",
+    "slot": 101,
+    "stage": "delta_analysis"
+  },
+  {
+    "correlation_id": "replay:smart_wallet_buy:1:0",
+    "detail": {
+      "rejected_by": null,
+      "strategy": "stub",
+      "trace": [
+        {
+          "accepted": true,
+          "filter": "accept_all",
+          "reason": null
+        }
+      ]
+    },
+    "duration_us": 1,
+    "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "occurred_at_ms": 1750000000000,
+    "outcome": "accepted",
+    "record_id": "replay:smart_wallet_buy:1:0:003:candidate_filtering",
+    "slot": 101,
+    "stage": "candidate_filtering"
+  },
+  {
+    "correlation_id": "replay:smart_wallet_buy:1:0",
+    "detail": {
+      "enabled_modules": [],
+      "features": [],
+      "strategy": "stub"
+    },
+    "duration_us": 1,
+    "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "occurred_at_ms": 1750000000000,
+    "outcome": "analyzed",
+    "record_id": "replay:smart_wallet_buy:1:0:004:heavy_analysis",
+    "slot": 101,
+    "stage": "heavy_analysis"
+  },
+  {
+    "correlation_id": "replay:smart_wallet_buy:1:0",
+    "detail": {
+      "contributions": [],
+      "reason": "stubbed test outcome",
+      "score": null,
+      "strategy": "stub"
+    },
+    "duration_us": 1,
+    "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "occurred_at_ms": 1750000000000,
+    "outcome": "advance",
+    "record_id": "replay:smart_wallet_buy:1:0:005:scoring",
+    "slot": 101,
+    "stage": "scoring"
+  },
+  {
+    "correlation_id": "replay:smart_wallet_buy:1:0",
+    "detail": {
+      "reason": "no material deterioration detected against fresh state",
+      "strategy": "stub"
+    },
+    "duration_us": 1,
+    "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "occurred_at_ms": 1750000000000,
+    "outcome": "pass",
+    "record_id": "replay:smart_wallet_buy:1:0:006:pre_trade_validation",
+    "slot": 101,
+    "stage": "pre_trade_validation"
+  },
+  {
+    "correlation_id": "replay:smart_wallet_buy:1:0",
+    "detail": {
+      "sink": "collecting_alert_sink",
+      "strategy": "stub"
+    },
+    "duration_us": 1,
+    "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "occurred_at_ms": 1750000000000,
+    "outcome": "alert_raised",
+    "record_id": "replay:smart_wallet_buy:1:0:007:action",
+    "slot": 101,
+    "stage": "action"
+  }
+]

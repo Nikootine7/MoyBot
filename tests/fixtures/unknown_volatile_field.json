@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "name": "unknown_volatile_field",
+  "description": "An event arrives for a token whose slippage has never been reported. Final pre-trade validation must cancel rather than assume a value (PROJECT_SPEC.md 5, 10.8).",
+  "updates": [
+    {
+      "mint": "MoyMintBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "slot": 200,
+      "observed_at_ms": 1750000100000,
+      "metrics": {
+        "price": "0.00001900",
+        "volume": "8800.00",
+        "buy_volume": "6100.00",
+        "sell_volume": "2700.00",
+        "liquidity": "77000.00",
+        "dev_sold": false
+      },
+      "events": [
+        {
+          "kind": "liquidity_change",
+          "payload": {
+            "direction": "add"
+          }
+        }
+      ]
+    }
+  ]
+}

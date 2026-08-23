@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "name": "no_event",
+  "description": "Continuous data arrives but the source declares no event, so the pipeline must stop after the event-trigger stage (PROJECT_SPEC.md 2.2).",
+  "updates": [
+    {
+      "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "slot": 100,
+      "observed_at_ms": 1750000000000,
+      "metrics": {
+        "price": "0.00000410",
+        "volume": "12500.00",
+        "buy_volume": "9000.00",
+        "sell_volume": "3500.00",
+        "liquidity": "41000.00",
+        "slippage_bps": "35",
+        "dev_sold": false,
+        "holders": {
+          "holder_count": 812,
+          "top_holder_shares": ["0.041", "0.032", "0.019"]
+        }
+      }
+    }
+  ]
+}
