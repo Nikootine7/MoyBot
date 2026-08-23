@@ -11,7 +11,10 @@ import pytest
 from pydantic import ValidationError
 
 from moybot.adapters.replay.fixtures import load_fixture
+from moybot.adapters.replay.refresher import ReplayStateRefresher
 from moybot.adapters.replay.source import ReplayDataSource
+from moybot.core.clock import SourceTimeClock
+from moybot.core.ingestion.refresh_port import RefreshedState, RefreshResult, RefreshUnavailable
 from moybot.core.model.update import MarketUpdate
 
 
@@ -59,10 +62,46 @@ def test_unsupported_schema_version_is_rejected(tmp_path: Path) -> None:
         load_fixture(path)
 
 
+def test_schema_v1_fixture_is_rejected(tmp_path: Path) -> None:
+    """Schema v1 stops loading; v2 is the supported version (docs/DECISIONS.md D-010)."""
+    path = tmp_path / "v1.json"
+    path.write_text(json.dumps({"schema_version": 1, "name": "v1"}), encoding="utf-8")
+    with pytest.raises(ValueError, match="unsupported fixture schema_version 1; expected 2"):
+        load_fixture(path)
+
+
+def test_validation_state_is_published_while_its_observation_is_replayed(
+    fixture_dir: Path,
+) -> None:
+    refresher = ReplayStateRefresher()
+    source = ReplayDataSource.from_file(fixture_dir / "smart_wallet_buy.json", refresher=refresher)
+
+    async def refreshes() -> list[RefreshResult]:
+        seen: list[RefreshResult] = []
+        async for update in source.updates():
+            seen.append(refresher.refresh(update.mint))
+        return seen
+
+    first, second = asyncio.run(refreshes())
+    assert isinstance(first, RefreshUnavailable)
+    assert isinstance(second, RefreshedState)
+    assert int(second.slot) == 102
+
+
+def test_observation_time_drives_the_source_clock(fixture_dir: Path) -> None:
+    clock = SourceTimeClock()
+    source = ReplayDataSource.from_file(fixture_dir / "smart_wallet_buy.json", clock=clock)
+
+    async def times() -> list[int]:
+        return [int(clock.now_ms()) async for _ in source.updates()]
+
+    assert asyncio.run(times()) == [1_750_000_000_000, 1_750_000_000_400]
+
+
 def test_unknown_fixture_field_is_rejected(tmp_path: Path) -> None:
     path = tmp_path / "bad.json"
     path.write_text(
-        json.dumps({"schema_version": 1, "name": "bad", "unexpected": True}), encoding="utf-8"
+        json.dumps({"schema_version": 2, "name": "bad", "unexpected": True}), encoding="utf-8"
     )
     with pytest.raises(ValidationError):
         load_fixture(path)
@@ -73,7 +112,7 @@ def test_invalid_mint_is_rejected(tmp_path: Path) -> None:
     path.write_text(
         json.dumps(
             {
-                "schema_version": 1,
+                "schema_version": 2,
                 "name": "bad_mint",
                 "updates": [{"mint": "nope", "slot": 1, "observed_at_ms": 1}],
             }

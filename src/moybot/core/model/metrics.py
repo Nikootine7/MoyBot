@@ -21,6 +21,8 @@ from moybot.core.model.primitives import Pubkey, Slot, TimestampMs
 __all__ = [
     "HolderDistribution",
     "LpState",
+    "MetricFields",
+    "MetricValue",
     "TokenMetrics",
     "TokenState",
     "TradeDirection",
@@ -125,3 +127,24 @@ class TokenMetrics:
     wallet_cluster_ids: tuple[str, ...] = ()
     token_state: TokenState = field(default_factory=TokenState)
     lp_state: LpState = field(default_factory=LpState)
+
+
+type MetricValue = (
+    Decimal
+    | int
+    | bool
+    | HolderDistribution
+    | TokenState
+    | LpState
+    | tuple[Pubkey, ...]
+    | tuple[str, ...]
+    | None
+)
+"""Every type a reported metric field can carry.
+
+The union is closed so that a partial observation stays statically checkable: a reported value is
+either one of these, or the source reported something the domain model does not have a field for.
+"""
+
+type MetricFields = tuple[tuple[str, MetricValue], ...]
+"""Reported metric fields, as ``(field name, value)`` pairs in source order."""

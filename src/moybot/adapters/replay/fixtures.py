@@ -1,33 +1,39 @@
 """Replay fixture format.
 
-STATUS: EXPERIMENTAL, Phase 1 artifact.
+STATUS: EXPERIMENTAL, Phase 1/2 artifact. Schema version 2 (docs/DECISIONS.md D-010).
 
 This schema exists so the pipeline can run deterministically offline. It is explicitly **not** a
-provider contract and implies nothing about which data provider MOYBOT will use: that remains an
-OPEN QUESTION (PROJECT_SPEC.md §3, §9).
+provider contract and implies nothing about which data provider MOYBOT will use, or about how a
+live implementation would read fresh state: both remain OPEN QUESTIONS (PROJECT_SPEC.md §3, §9).
 
 Only metric fields present in an update are applied to the cache, so a fixture can express
 "this field was not reported" as distinct from "this field is zero". Events are listed
 explicitly: the replay source never derives an event from the metrics.
+
+Version 2 adds an optional ``validation_state`` block per observation: the state a re-read at
+validation time would return (PROJECT_SPEC.md §5). It is not an observation, so it never enters
+the delta, never produces an event, and is never scored.
 """
 
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 from typing import final
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from moybot.core.ingestion.refresh_port import RefreshedState
 from moybot.core.model.event import Event, parse_event_kind
-from moybot.core.model.metrics import HolderDistribution, LpState, TokenState
+from moybot.core.model.metrics import HolderDistribution, LpState, MetricFields, TokenState
 from moybot.core.model.primitives import Pubkey, Slot, TimestampMs, parse_pubkey
 from moybot.core.model.update import MarketUpdate
 
-__all__ = ["FixtureFile", "load_fixture"]
+__all__ = ["FixtureFile", "ReplayEntry", "load_fixture"]
 
-_SUPPORTED_SCHEMA_VERSION = 1
+_SUPPORTED_SCHEMA_VERSION = 2
 
 
 class _StrictModel(BaseModel):
@@ -107,14 +113,14 @@ class MetricsFixture(_StrictModel):
     token_state: TokenStateFixture | None = None
     lp_state: LpStateFixture | None = None
 
-    def to_patch_fields(self) -> tuple[tuple[str, object], ...]:
+    def to_patch_fields(self) -> MetricFields:
         """Return only the metric fields this update explicitly reported.
 
         The mapping is written out field by field so that adding a metric to the domain model is
         a deliberate act rather than something a fixture can imply.
         """
         reported = self.model_fields_set
-        candidates: tuple[tuple[str, object], ...] = (
+        candidates: MetricFields = (
             ("price", self.price),
             ("price_change", self.price_change),
             ("volume", self.volume),
@@ -169,14 +175,36 @@ class EventFixture(_StrictModel):
         )
 
 
+class ValidationStateFixture(_StrictModel):
+    """State a re-read at validation time would return (docs/DECISIONS.md D-010, D-011).
+
+    This models the answer to a fresh read, not a further observation from the stream. Declaring
+    it is how an offline scenario can distinguish "nothing changed between the decision and the
+    action" from "the token deteriorated in between", which PROJECT_SPEC.md §5 exists to catch.
+    """
+
+    slot: int
+    observed_at_ms: int
+    metrics: MetricsFixture = Field(default_factory=MetricsFixture)
+
+    def to_domain(self, mint: Pubkey) -> RefreshedState:
+        return RefreshedState(
+            mint=mint,
+            slot=Slot(self.slot),
+            observed_at_ms=TimestampMs(self.observed_at_ms),
+            fields=self.metrics.to_patch_fields(),
+        )
+
+
 class UpdateFixture(_StrictModel):
-    """One observation of one token."""
+    """One observation of one token, with the fresh state a validation read would return."""
 
     mint: str
     slot: int
     observed_at_ms: int
     metrics: MetricsFixture = Field(default_factory=MetricsFixture)
     events: tuple[EventFixture, ...] = ()
+    validation_state: ValidationStateFixture | None = None
 
     def to_domain(self, source: str, sequence: int) -> MarketUpdate:
         mint = parse_pubkey(self.mint)
@@ -196,6 +224,15 @@ class UpdateFixture(_StrictModel):
 
 
 @final
+@dataclass(frozen=True, slots=True)
+class ReplayEntry:
+    """One replayed observation together with the fresh state declared alongside it."""
+
+    update: MarketUpdate
+    validation_state: RefreshedState | None = None
+
+
+@final
 class FixtureFile(_StrictModel):
     """A replay scenario."""
 
@@ -204,12 +241,26 @@ class FixtureFile(_StrictModel):
     description: str = ""
     updates: tuple[UpdateFixture, ...] = ()
 
+    def to_entries(self) -> tuple[ReplayEntry, ...]:
+        """Convert the scenario into replay entries, numbered in file order."""
+        source = f"replay:{self.name}"
+        entries: list[ReplayEntry] = []
+        for sequence, update in enumerate(self.updates):
+            domain = update.to_domain(source, sequence)
+            declared = update.validation_state
+            entries.append(
+                ReplayEntry(
+                    update=domain,
+                    validation_state=(
+                        declared.to_domain(domain.mint) if declared is not None else None
+                    ),
+                )
+            )
+        return tuple(entries)
+
     def to_updates(self) -> tuple[MarketUpdate, ...]:
         """Convert the scenario into domain updates, numbered in file order."""
-        return tuple(
-            update.to_domain(f"replay:{self.name}", sequence)
-            for sequence, update in enumerate(self.updates)
-        )
+        return tuple(entry.update for entry in self.to_entries())
 
 
 def load_fixture(path: Path) -> FixtureFile:

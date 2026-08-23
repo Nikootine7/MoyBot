@@ -12,7 +12,7 @@ from pathlib import Path
 
 import structlog
 
-from moybot.adapters.replay.source import ReplayDataSource
+from moybot.adapters.replay.session import open_replay
 from moybot.app.composition import build_pipeline
 from moybot.app.config import load_config
 from moybot.core.pipeline.runner import UpdateResult
@@ -24,7 +24,7 @@ __all__ = ["main"]
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="moybot",
-        description="Replay a fixture through the MOYBOT pipeline (Phase 1, alert-only).",
+        description="Replay a fixture through the MOYBOT pipeline (offline, alert-only).",
     )
     parser.add_argument("--fixture", type=Path, required=True, help="path to a replay fixture")
     parser.add_argument("--config", type=Path, default=None, help="path to a TOML config file")
@@ -42,13 +42,17 @@ async def _run(fixture: Path, config_path: Path | None, data_dir: Path | None) -
     configure_logging(config.logging.level)
     logger = structlog.get_logger("moybot.cli")
 
-    source = ReplayDataSource.from_file(fixture)
-    pipeline = build_pipeline(config, data_dir=data_dir)
-    results: tuple[UpdateResult, ...] = await pipeline.runner.run_source(source)
+    # The replay supplies its own time, so staleness is judged against when the data was
+    # observed rather than when the replay runs (docs/DECISIONS.md D-009).
+    session = open_replay(fixture)
+    pipeline = build_pipeline(
+        config, clock=session.clock, refresher=session.refresher, data_dir=data_dir
+    )
+    results: tuple[UpdateResult, ...] = await pipeline.runner.run_source(session.source)
 
     logger.info(
         "replay_completed",
-        source=source.name,
+        source=session.source.name,
         updates=len(results),
         events=sum(len(result.events) for result in results),
         decisions=sum(len(result.decisions) for result in results),

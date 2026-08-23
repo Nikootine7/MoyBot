@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import final
 
 from moybot.core.model.event import Event
+from moybot.core.model.metrics import MetricFields
 from moybot.core.model.primitives import Pubkey, Slot, TimestampMs
 from moybot.core.state.cache_port import MetricsPatch
 
@@ -27,7 +28,7 @@ class MarketUpdate:
     observed_at_ms: TimestampMs
     source: str
     sequence: int
-    metrics: tuple[tuple[str, object], ...] = ()
+    metrics: MetricFields = ()
     declared_events: tuple[Event, ...] = ()
 
     def to_patch(self) -> MetricsPatch:

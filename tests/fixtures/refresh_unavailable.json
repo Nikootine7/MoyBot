@@ -1,0 +1,38 @@
+{
+  "schema_version": 2,
+  "name": "refresh_unavailable",
+  "description": "An event arrives but no validation-time state can be read. Refresh is mandatory, so final pre-trade validation must cancel rather than fall back to the decision snapshot (docs/DECISIONS.md D-011).",
+  "updates": [
+    {
+      "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "slot": 100,
+      "observed_at_ms": 1750000000000,
+      "metrics": {
+        "price": "0.00000410",
+        "volume": "12500.00",
+        "buy_volume": "9000.00",
+        "sell_volume": "3500.00",
+        "liquidity": "41000.00",
+        "slippage_bps": "35",
+        "dev_sold": false
+      }
+    },
+    {
+      "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "slot": 101,
+      "observed_at_ms": 1750000000400,
+      "metrics": {
+        "price": "0.00000425",
+        "liquidity": "42250.00"
+      },
+      "events": [
+        {
+          "kind": "smart_wallet_buy",
+          "payload": {
+            "wallet": "MoySmartWaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        }
+      ]
+    }
+  ]
+}

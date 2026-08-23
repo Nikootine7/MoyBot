@@ -1,0 +1,57 @@
+{
+  "schema_version": 2,
+  "name": "deterioration_before_action",
+  "description": "The token looks acceptable when the decision is made and has deteriorated by the time the action would be taken: the validation-time re-read reports much lower liquidity. Final pre-trade validation must cancel (PROJECT_SPEC.md 5).",
+  "updates": [
+    {
+      "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "slot": 100,
+      "observed_at_ms": 1750000000000,
+      "metrics": {
+        "price": "0.00000410",
+        "volume": "12500.00",
+        "buy_volume": "9000.00",
+        "sell_volume": "3500.00",
+        "liquidity": "41000.00",
+        "slippage_bps": "35",
+        "dev_sold": false,
+        "smart_wallet_addresses": ["MoySmartWaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],
+        "lp_state": {
+          "lp_token_supply": "31000"
+        }
+      }
+    },
+    {
+      "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "slot": 101,
+      "observed_at_ms": 1750000000400,
+      "metrics": {
+        "price": "0.00000425",
+        "volume": "14100.00",
+        "buy_volume": "10400.00",
+        "sell_volume": "3700.00",
+        "liquidity": "42250.00",
+        "slippage_bps": "33"
+      },
+      "events": [
+        {
+          "kind": "smart_wallet_buy",
+          "payload": {
+            "wallet": "MoySmartWaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        }
+      ],
+      "validation_state": {
+        "slot": 102,
+        "observed_at_ms": 1750000000600,
+        "metrics": {
+          "price": "0.00000424",
+          "buy_volume": "10450.00",
+          "sell_volume": "3800.00",
+          "liquidity": "20000.00",
+          "slippage_bps": "36"
+        }
+      }
+    }
+  ]
+}

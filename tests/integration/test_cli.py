@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -22,11 +21,10 @@ def test_cli_replays_a_fixture_and_persists_state(fixture_dir: Path, tmp_path: P
         ]
     )
     assert exit_code == 0
-    # Snapshots are partitioned by observation date (from the fixture); provenance by the date the
-    # record was written (from the system clock).
-    today = datetime.now(UTC).strftime("%Y-%m-%d")
+    # A replay takes its time from the fixture, so both snapshots and provenance are partitioned
+    # by the observation date rather than by the day the replay ran (docs/DECISIONS.md D-009).
     snapshots = tmp_path / "snapshots" / MINT_A / "2025-06-15.ndjson"
-    provenance = tmp_path / "provenance" / f"{today}.ndjson"
+    provenance = tmp_path / "provenance" / "2025-06-15.ndjson"
     assert json.loads(snapshots.read_text(encoding="utf-8").splitlines()[0])["mint"] == MINT_A
     stages = [
         json.loads(line)["stage"] for line in provenance.read_text(encoding="utf-8").splitlines()

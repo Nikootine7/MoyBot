@@ -1,12 +1,16 @@
 """Material-deterioration check (PROJECT_SPEC.md §5).
 
-The validator re-captures state immediately before acting and compares it with the state the
-decision was made on. It cancels when:
+Immediately before acting, the validator re-reads the token's state through the fresh-state port
+and compares it with the state the decision was made on. Re-reading is mandatory: comparing the
+decision snapshot with itself would conclude that nothing changed, which is the one answer this
+gate must never give by construction (docs/DECISIONS.md D-011).
 
-* the required policies are not configured;
-* no fresh snapshot can be captured;
-* the fresh snapshot is older or further behind than the configured staleness policy allows;
-* any volatile field the check depends on is unknown, in either snapshot;
+It cancels when:
+
+* the required policies are not configured, or no refresher is configured;
+* the refresh is unavailable;
+* the refreshed state is older or further behind than the configured staleness policy allows;
+* any volatile field the check depends on is unknown, in either state;
 * or a configured deterioration limit is breached.
 
 Every limit comes from configuration. PROJECT_SPEC.md §9 leaves risk percentages and criteria
@@ -21,11 +25,20 @@ from decimal import Decimal
 from typing import final
 
 from moybot.core.clock import Clock
+from moybot.core.ingestion.refresh_port import RefreshedState, StateRefresher
 from moybot.core.model.candidate import Candidate
-from moybot.core.model.decision import Decision, ValidationOutcome, ValidationResult
+from moybot.core.model.decision import (
+    Decision,
+    RefreshAudit,
+    StalenessAudit,
+    ValidationOutcome,
+    ValidationResult,
+    VolatileComparison,
+)
 from moybot.core.model.primitives import Pubkey, Slot
 from moybot.core.model.snapshot import Snapshot
 from moybot.core.snapshots.builder import SnapshotBuilder
+from moybot.core.state.cache_port import ContinuousStateCache
 
 __all__ = [
     "DeteriorationPolicy",
@@ -37,7 +50,7 @@ __all__ = [
 @final
 @dataclass(frozen=True, slots=True)
 class StalenessPolicy:
-    """How old and how far behind a snapshot may be at execution time.
+    """How old and how far behind refreshed state may be at execution time.
 
     Both limits must be supplied; there is no default, because the latency target and acceptable
     staleness are OPEN QUESTIONS (PROJECT_SPEC.md §9).
@@ -79,12 +92,6 @@ class _VolatileView:
     sell_volume: Decimal
     smart_wallets: frozenset[Pubkey]
     lp_token_supply: Decimal | None
-
-
-def _cancel(reason: str, snapshot: Snapshot | None = None) -> ValidationResult:
-    return ValidationResult(
-        outcome=ValidationOutcome.CANCELLED, reason=reason, checked_snapshot=snapshot
-    )
 
 
 def _read_volatile(snapshot: Snapshot) -> _VolatileView | tuple[str, ...]:
@@ -133,6 +140,24 @@ def _read_volatile(snapshot: Snapshot) -> _VolatileView | tuple[str, ...]:
     )
 
 
+def _comparisons(before: _VolatileView, after: _VolatileView) -> tuple[VolatileComparison, ...]:
+    """Record every volatile value the check looked at, on both sides."""
+    return (
+        VolatileComparison("price", str(before.price), str(after.price)),
+        VolatileComparison("liquidity", str(before.liquidity), str(after.liquidity)),
+        VolatileComparison("slippage_bps", str(before.slippage_bps), str(after.slippage_bps)),
+        VolatileComparison("dev_sold", str(before.dev_sold), str(after.dev_sold)),
+        VolatileComparison("buy_volume", str(before.buy_volume), str(after.buy_volume)),
+        VolatileComparison("sell_volume", str(before.sell_volume), str(after.sell_volume)),
+        VolatileComparison(
+            "smart_wallet_count", str(len(before.smart_wallets)), str(len(after.smart_wallets))
+        ),
+        VolatileComparison(
+            "lp_token_supply", str(before.lp_token_supply), str(after.lp_token_supply)
+        ),
+    )
+
+
 def _drop_fraction(before: Decimal, after: Decimal) -> Decimal | None:
     """Fractional decrease from ``before`` to ``after``; ``None`` when undefined."""
     if before <= 0:
@@ -147,18 +172,26 @@ class MaterialDeteriorationValidator:
     def __init__(
         self,
         builder: SnapshotBuilder,
+        cache: ContinuousStateCache,
         clock: Clock,
+        refresher: StateRefresher | None = None,
         staleness_policy: StalenessPolicy | None = None,
         deterioration_policy: DeteriorationPolicy | None = None,
     ) -> None:
         self._builder = builder
+        self._cache = cache
         self._clock = clock
+        self._refresher = refresher
         self._staleness_policy = staleness_policy
         self._deterioration_policy = deterioration_policy
 
     @property
     def is_configured(self) -> bool:
-        return self._staleness_policy is not None and self._deterioration_policy is not None
+        return (
+            self._refresher is not None
+            and self._staleness_policy is not None
+            and self._deterioration_policy is not None
+        )
 
     def validate(
         self, candidate: Candidate, decision: Decision, current_slot: Slot
@@ -166,6 +199,7 @@ class MaterialDeteriorationValidator:
         del decision
         staleness = self._staleness_policy
         deterioration = self._deterioration_policy
+        refresher = self._refresher
         if staleness is None:
             return _cancel(
                 "staleness policy not configured; acceptable staleness is an OPEN QUESTION "
@@ -176,95 +210,185 @@ class MaterialDeteriorationValidator:
                 "deterioration policy not configured; material-deterioration limits are an "
                 "OPEN QUESTION (PROJECT_SPEC.md §9), so validation fails closed"
             )
-
-        fresh = self._builder.capture(candidate.mint)
-        if fresh is None:
-            return _cancel("no fresh snapshot available for the token at validation time")
-
-        age_ms = fresh.age_ms(self._clock.now_ms())
-        if age_ms > staleness.max_snapshot_age_ms:
+        if refresher is None:
             return _cancel(
-                f"fresh snapshot is {age_ms} ms old, limit is {staleness.max_snapshot_age_ms} ms",
-                fresh,
+                "no state refresher configured; fresh state cannot be read, so validation "
+                "fails closed (docs/DECISIONS.md D-011)"
             )
-        slot_lag = fresh.slot_lag(current_slot)
-        if slot_lag > staleness.max_slot_lag:
+
+        refreshed = refresher.refresh(candidate.mint)
+        if not isinstance(refreshed, RefreshedState):
             return _cancel(
-                f"fresh snapshot is {slot_lag} slots behind slot {current_slot}, limit is "
-                f"{staleness.max_slot_lag}",
-                fresh,
+                f"fresh state unavailable: {refreshed.reason}",
+                refresh=RefreshAudit(
+                    refresher=refresher.name,
+                    available=False,
+                    unavailable_reason=refreshed.reason,
+                ),
+            )
+        audit = RefreshAudit(
+            refresher=refresher.name,
+            available=True,
+            slot=refreshed.slot,
+            observed_at_ms=refreshed.observed_at_ms,
+        )
+
+        fresh = self._apply(refreshed)
+        if fresh is None:
+            return _cancel("refreshed state could not be captured as a snapshot", refresh=audit)
+
+        # The refreshed read may be ahead of the slot the event arrived on; the check is against
+        # the most recent slot either of them has seen.
+        checked_slot = Slot(max(int(current_slot), int(refreshed.slot)))
+        checked_at_ms = self._clock.now_ms()
+        measured = StalenessAudit(
+            checked_at_ms=checked_at_ms,
+            age_ms=fresh.age_ms(checked_at_ms),
+            current_slot=checked_slot,
+            slot_lag=fresh.slot_lag(checked_slot),
+        )
+        if measured.age_ms > staleness.max_snapshot_age_ms:
+            return _cancel(
+                f"refreshed state is {measured.age_ms} ms old, limit is "
+                f"{staleness.max_snapshot_age_ms} ms",
+                snapshot=fresh,
+                refresh=audit,
+                staleness=measured,
+                limit="max_snapshot_age_ms",
+            )
+        if measured.slot_lag > staleness.max_slot_lag:
+            return _cancel(
+                f"refreshed state is {measured.slot_lag} slots behind slot {checked_slot}, "
+                f"limit is {staleness.max_slot_lag}",
+                snapshot=fresh,
+                refresh=audit,
+                staleness=measured,
+                limit="max_slot_lag",
             )
 
         before = _read_volatile(candidate.snapshot)
         if isinstance(before, tuple):
             return _cancel(
-                f"volatile fields unknown in the decision snapshot: {', '.join(before)}", fresh
+                f"volatile fields unknown in the decision snapshot: {', '.join(before)}",
+                snapshot=fresh,
+                refresh=audit,
+                staleness=measured,
             )
         after = _read_volatile(fresh)
         if isinstance(after, tuple):
-            return _cancel(f"volatile fields unknown at validation time: {', '.join(after)}", fresh)
-
-        return self._compare(before, after, fresh, deterioration)
-
-    def _compare(
-        self,
-        before: _VolatileView,
-        after: _VolatileView,
-        fresh: Snapshot,
-        policy: DeteriorationPolicy,
-    ) -> ValidationResult:
-        price_drop = _drop_fraction(before.price, after.price)
-        if price_drop is None:
-            return _cancel("price at decision time was not positive; drop is undefined", fresh)
-        if price_drop > policy.max_price_drop_fraction:
             return _cancel(
-                f"price dropped by {price_drop}, limit is {policy.max_price_drop_fraction}",
-                fresh,
+                f"volatile fields unknown at validation time: {', '.join(after)}",
+                snapshot=fresh,
+                refresh=audit,
+                staleness=measured,
             )
 
-        liquidity_drop = _drop_fraction(before.liquidity, after.liquidity)
-        if liquidity_drop is None:
-            return _cancel("liquidity at decision time was not positive; drop is undefined", fresh)
-        if liquidity_drop > policy.max_liquidity_drop_fraction:
-            return _cancel(
-                f"liquidity dropped by {liquidity_drop}, limit is "
-                f"{policy.max_liquidity_drop_fraction}",
-                fresh,
-            )
+        return _compare(before, after, fresh, deterioration, audit, measured)
 
-        if after.slippage_bps > policy.max_slippage_bps:
-            return _cancel(
-                f"slippage {after.slippage_bps} bps exceeds limit {policy.max_slippage_bps} bps",
-                fresh,
-            )
+    def _apply(self, refreshed: RefreshedState) -> Snapshot | None:
+        """Write the refreshed read into continuous state and capture it as a snapshot.
 
-        if policy.cancel_on_dev_sold and after.dev_sold:
-            return _cancel("dev sold as of the fresh snapshot", fresh)
+        The refreshed read is state, not an observation: it updates the cache so the snapshot is
+        a complete picture, but it never becomes an event, a delta, or a scored input.
+        """
+        self._cache.apply(refreshed.to_patch())
+        return self._builder.capture(refreshed.mint)
 
-        if after.buy_volume <= 0:
-            return _cancel("buy volume is not positive; sell pressure is undefined", fresh)
-        sell_pressure = after.sell_volume / after.buy_volume
-        if sell_pressure > policy.max_sell_pressure_ratio:
-            return _cancel(
-                f"sell pressure {sell_pressure} exceeds limit {policy.max_sell_pressure_ratio}",
-                fresh,
-            )
 
-        if policy.cancel_on_smart_wallet_exit:
-            exited = before.smart_wallets - after.smart_wallets
-            if exited:
-                return _cancel(
-                    f"{len(exited)} smart wallet(s) no longer present since the decision snapshot",
-                    fresh,
-                )
+def _cancel(
+    reason: str,
+    snapshot: Snapshot | None = None,
+    refresh: RefreshAudit | None = None,
+    staleness: StalenessAudit | None = None,
+    comparisons: tuple[VolatileComparison, ...] = (),
+    limit: str | None = None,
+) -> ValidationResult:
+    return ValidationResult(
+        outcome=ValidationOutcome.CANCELLED,
+        reason=reason,
+        checked_snapshot=snapshot,
+        refresh=refresh,
+        staleness=staleness,
+        comparisons=comparisons,
+        breached_limit=limit,
+    )
 
-        if policy.cancel_on_lp_supply_change and before.lp_token_supply != after.lp_token_supply:
-            return _cancel(
-                "LP token supply changed between the decision snapshot and validation", fresh
-            )
 
-        return ValidationResult(
-            outcome=ValidationOutcome.PASS,
-            reason="no material deterioration detected against fresh state",
-            checked_snapshot=fresh,
+def _compare(
+    before: _VolatileView,
+    after: _VolatileView,
+    fresh: Snapshot,
+    policy: DeteriorationPolicy,
+    refresh: RefreshAudit,
+    staleness: StalenessAudit,
+) -> ValidationResult:
+    compared = _comparisons(before, after)
+
+    def cancel(reason: str, limit: str | None = None) -> ValidationResult:
+        return _cancel(
+            reason,
+            snapshot=fresh,
+            refresh=refresh,
+            staleness=staleness,
+            comparisons=compared,
+            limit=limit,
         )
+
+    price_drop = _drop_fraction(before.price, after.price)
+    if price_drop is None:
+        return cancel("price at decision time was not positive; drop is undefined")
+    if price_drop > policy.max_price_drop_fraction:
+        return cancel(
+            f"price dropped by {price_drop}, limit is {policy.max_price_drop_fraction}",
+            "max_price_drop_fraction",
+        )
+
+    liquidity_drop = _drop_fraction(before.liquidity, after.liquidity)
+    if liquidity_drop is None:
+        return cancel("liquidity at decision time was not positive; drop is undefined")
+    if liquidity_drop > policy.max_liquidity_drop_fraction:
+        return cancel(
+            f"liquidity dropped by {liquidity_drop}, limit is {policy.max_liquidity_drop_fraction}",
+            "max_liquidity_drop_fraction",
+        )
+
+    if after.slippage_bps > policy.max_slippage_bps:
+        return cancel(
+            f"slippage {after.slippage_bps} bps exceeds limit {policy.max_slippage_bps} bps",
+            "max_slippage_bps",
+        )
+
+    if policy.cancel_on_dev_sold and after.dev_sold:
+        return cancel("dev sold as of the refreshed state", "cancel_on_dev_sold")
+
+    if after.buy_volume <= 0:
+        return cancel("buy volume is not positive; sell pressure is undefined")
+    sell_pressure = after.sell_volume / after.buy_volume
+    if sell_pressure > policy.max_sell_pressure_ratio:
+        return cancel(
+            f"sell pressure {sell_pressure} exceeds limit {policy.max_sell_pressure_ratio}",
+            "max_sell_pressure_ratio",
+        )
+
+    if policy.cancel_on_smart_wallet_exit:
+        exited = before.smart_wallets - after.smart_wallets
+        if exited:
+            return cancel(
+                f"{len(exited)} smart wallet(s) no longer present since the decision snapshot",
+                "cancel_on_smart_wallet_exit",
+            )
+
+    if policy.cancel_on_lp_supply_change and before.lp_token_supply != after.lp_token_supply:
+        return cancel(
+            "LP token supply changed between the decision snapshot and validation",
+            "cancel_on_lp_supply_change",
+        )
+
+    return ValidationResult(
+        outcome=ValidationOutcome.PASS,
+        reason="no material deterioration detected against refreshed state",
+        checked_snapshot=fresh,
+        refresh=refresh,
+        staleness=staleness,
+        comparisons=compared,
+    )

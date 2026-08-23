@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "smart_wallet_buy",
-  "description": "A baseline observation followed by an observation carrying a source-declared event. All volatile fields required by final pre-trade validation (PROJECT_SPEC.md 5) are present.",
+  "description": "A baseline observation followed by an observation carrying a source-declared event. All volatile fields required by final pre-trade validation (PROJECT_SPEC.md 5) are present, and the event observation declares the state a validation-time re-read returns: the token is unchanged in substance.",
   "updates": [
     {
       "mint": "MoyMintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -63,7 +63,18 @@
             "wallet": "MoySmartWbBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
           }
         }
-      ]
+      ],
+      "validation_state": {
+        "slot": 102,
+        "observed_at_ms": 1750000000600,
+        "metrics": {
+          "price": "0.00000427",
+          "buy_volume": "10600.00",
+          "sell_volume": "3750.00",
+          "liquidity": "42400.00",
+          "slippage_bps": "34"
+        }
+      }
     }
   ]
 }

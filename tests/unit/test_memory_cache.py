@@ -6,14 +6,14 @@ from decimal import Decimal
 
 import pytest
 
-from moybot.core.model.metrics import WalletActivity, WalletHistory
+from moybot.core.model.metrics import MetricValue, WalletActivity, WalletHistory
 from moybot.core.model.primitives import Slot, TimestampMs
 from moybot.core.state.cache_port import MetricsPatch
 from moybot.core.state.memory_cache import InMemoryStateCache
 from tests.support import MINT_A, WALLET_A
 
 
-def _patch(slot: int, **fields: object) -> MetricsPatch:
+def _patch(slot: int, **fields: MetricValue) -> MetricsPatch:
     return MetricsPatch(
         mint=MINT_A,
         slot=Slot(slot),
@@ -51,7 +51,14 @@ def test_explicit_none_clears_a_field() -> None:
 def test_unknown_metric_field_is_rejected() -> None:
     cache = InMemoryStateCache()
     with pytest.raises(ValueError, match="unknown metric fields"):
-        cache.apply(_patch(1, moon_phase="full"))
+        cache.apply(_patch(1, moon_phase=None))
+
+
+def test_value_of_the_wrong_type_is_rejected() -> None:
+    """A reported value the domain model cannot hold is refused, not coerced or written."""
+    cache = InMemoryStateCache()
+    with pytest.raises(TypeError, match="expects a decimal or None"):
+        cache.apply(_patch(1, price=True))
 
 
 def test_wallet_history_round_trip() -> None:

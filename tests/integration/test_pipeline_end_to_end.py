@@ -11,18 +11,20 @@ from collections.abc import Sequence
 from decimal import Decimal
 from pathlib import Path
 
+from moybot.adapters.replay.refresher import ReplayStateRefresher
+from moybot.adapters.replay.session import open_replay
 from moybot.adapters.replay.source import ReplayDataSource
 from moybot.app.composition import build_pipeline
 from moybot.app.config import AppConfig
 from moybot.core.action.log_sink import CollectingAlertSink
 from moybot.core.analysis.registry import HeavyAnalysisRegistry
-from moybot.core.clock import FixedClock
+from moybot.core.clock import SourceTimeClock
 from moybot.core.delta.differ import SnapshotDiffer
 from moybot.core.events.registry import DeclaredEventDetector, EventDetectorRegistry
 from moybot.core.filtering.accept_all import AcceptAllFilter
 from moybot.core.filtering.chain import FilterChain
 from moybot.core.model.decision import DecisionOutcome
-from moybot.core.model.primitives import TimestampMs
+from moybot.core.model.provenance import ProvenanceRecord
 from moybot.core.pipeline.runner import PipelineRunner, UpdateResult
 from moybot.core.pipeline.stage import StageName
 from moybot.core.snapshots.builder import SnapshotBuilder
@@ -36,7 +38,6 @@ from moybot.core.validation.material_deterioration import (
 )
 from tests.support import RejectingFilter, StubStrategy
 
-_START_MS = TimestampMs(1_750_000_000_000)
 _STALENESS = StalenessPolicy(max_snapshot_age_ms=60_000, max_slot_lag=10)
 _DETERIORATION = DeteriorationPolicy(
     max_price_drop_fraction=Decimal("0.1"),
@@ -50,10 +51,15 @@ _DETERIORATION = DeteriorationPolicy(
 
 
 class _Harness:
-    """A pipeline wired for tests, with in-memory stores."""
+    """A pipeline wired for tests, with in-memory stores.
+
+    Time and fresh state both come from the fixture, as they do for the CLI
+    (docs/DECISIONS.md D-009, D-011).
+    """
 
     def __init__(self, strategies: Sequence[Strategy], configure_validator: bool = True) -> None:
-        self.clock = FixedClock(_START_MS)
+        self.clock = SourceTimeClock()
+        self.refresher = ReplayStateRefresher(clock=self.clock)
         self.cache = InMemoryStateCache()
         self.snapshots = InMemorySnapshotStore()
         self.provenance = InMemoryProvenanceStore()
@@ -69,7 +75,9 @@ class _Harness:
             strategies=strategies,
             validator=MaterialDeteriorationValidator(
                 builder=builder,
+                cache=self.cache,
                 clock=self.clock,
+                refresher=self.refresher,
                 staleness_policy=_STALENESS if configure_validator else None,
                 deterioration_policy=_DETERIORATION if configure_validator else None,
             ),
@@ -79,8 +87,15 @@ class _Harness:
         )
 
     def run(self, fixture: Path) -> tuple[UpdateResult, ...]:
-        source = ReplayDataSource.from_file(fixture)
+        source = ReplayDataSource.from_file(fixture, refresher=self.refresher, clock=self.clock)
         return asyncio.run(self.runner.run_source(source))
+
+    def validation_record(self) -> ProvenanceRecord:
+        return next(
+            record
+            for record in self.provenance.records
+            if record.stage is StageName.PRE_TRADE_VALIDATION
+        )
 
 
 def _stages(harness: _Harness) -> list[StageName]:
@@ -107,6 +122,7 @@ def test_event_reaches_an_alert(fixture_dir: Path) -> None:
     assert alert.validation.passed
     assert _stages(harness) == [
         StageName.EVENT_TRIGGER,
+        StageName.CONTINUOUS_DATA,
         StageName.DELTA_ANALYSIS,
         StageName.CANDIDATE_FILTERING,
         StageName.HEAVY_ANALYSIS,
@@ -136,6 +152,7 @@ def test_filtered_out_candidate_stops_before_analysis(fixture_dir: Path) -> None
     assert harness.sink.alerts == []
     assert _stages(harness) == [
         StageName.EVENT_TRIGGER,
+        StageName.CONTINUOUS_DATA,
         StageName.DELTA_ANALYSIS,
         StageName.CANDIDATE_FILTERING,
     ]
@@ -145,13 +162,67 @@ def test_validation_cancels_on_unknown_volatile_field(fixture_dir: Path) -> None
     harness = _Harness([StubStrategy("stub", DecisionOutcome.ADVANCE)])
     harness.run(fixture_dir / "unknown_volatile_field.json")
     assert harness.sink.alerts == []
-    validation = next(
-        record
-        for record in harness.provenance.records
-        if record.stage is StageName.PRE_TRADE_VALIDATION
-    )
+    validation = harness.validation_record()
     assert validation.outcome == "cancelled"
     assert "slippage_bps" in str(validation.detail["reason"])
+
+
+def test_deterioration_between_decision_and_action_cancels(fixture_dir: Path) -> None:
+    harness = _Harness([StubStrategy("stub", DecisionOutcome.ADVANCE, FilterChain([]))])
+    harness.run(fixture_dir / "deterioration_before_action.json")
+    assert harness.sink.alerts == []
+    validation = harness.validation_record()
+    assert validation.outcome == "cancelled"
+    assert validation.detail["breached_limit"] == "max_liquidity_drop_fraction"
+
+
+def test_unavailable_refresh_cancels(fixture_dir: Path) -> None:
+    harness = _Harness([StubStrategy("stub", DecisionOutcome.ADVANCE, FilterChain([]))])
+    harness.run(fixture_dir / "refresh_unavailable.json")
+    assert harness.sink.alerts == []
+    validation = harness.validation_record()
+    assert validation.outcome == "cancelled"
+    refresh = validation.detail["refresh"]
+    assert isinstance(refresh, dict)
+    assert refresh["available"] is False
+
+
+def test_stale_refresh_cancels(fixture_dir: Path) -> None:
+    harness = _Harness([StubStrategy("stub", DecisionOutcome.ADVANCE, FilterChain([]))])
+    harness.run(fixture_dir / "stale_refresh.json")
+    assert harness.sink.alerts == []
+    validation = harness.validation_record()
+    assert validation.outcome == "cancelled"
+    assert validation.detail["breached_limit"] == "max_snapshot_age_ms"
+
+
+def test_validation_provenance_reconstructs_the_check(fixture_dir: Path) -> None:
+    harness = _Harness(
+        [StubStrategy("stub", DecisionOutcome.ADVANCE, FilterChain([AcceptAllFilter()]))]
+    )
+    harness.run(fixture_dir / "smart_wallet_buy.json")
+    detail = harness.validation_record().detail
+    checked = detail["checked_snapshot"]
+    staleness = detail["staleness"]
+    compared = detail["compared"]
+    assert isinstance(checked, dict)
+    assert isinstance(staleness, dict)
+    assert isinstance(compared, list)
+    assert checked["slot"] == 102
+    assert checked["captured_at_ms"] == 1_750_000_000_600
+    assert staleness["age_ms"] == 0
+    assert staleness["slot_lag"] == 0
+    liquidity = {"field": "liquidity", "at_decision": "42250.00", "at_validation": "42400.00"}
+    assert liquidity in compared
+
+
+def test_continuous_data_success_is_recorded(fixture_dir: Path) -> None:
+    harness = _Harness([StubStrategy("stub", DecisionOutcome.REJECT)])
+    harness.run(fixture_dir / "smart_wallet_buy.json")
+    captured = next(
+        record for record in harness.provenance.records if record.stage is StageName.CONTINUOUS_DATA
+    )
+    assert captured.outcome == "captured"
 
 
 def test_unconfigured_validator_cancels_every_candidate(fixture_dir: Path) -> None:
@@ -169,16 +240,17 @@ def test_not_configured_decision_never_reaches_validation(fixture_dir: Path) -> 
 
 def test_default_configuration_raises_no_alert(fixture_dir: Path, tmp_path: Path) -> None:
     sink = CollectingAlertSink()
+    session = open_replay(fixture_dir / "smart_wallet_buy.json")
     pipeline = build_pipeline(
         AppConfig(),
-        clock=FixedClock(_START_MS),
+        clock=session.clock,
+        refresher=session.refresher,
         action_sink=sink,
         snapshot_store=InMemorySnapshotStore(),
         provenance_store=InMemoryProvenanceStore(),
         data_dir=tmp_path,
     )
-    source = ReplayDataSource.from_file(fixture_dir / "smart_wallet_buy.json")
-    results = asyncio.run(pipeline.runner.run_source(source))
+    results = asyncio.run(pipeline.runner.run_source(session.source))
     outcomes = {decision.outcome for result in results for decision in result.decisions}
     assert outcomes == {DecisionOutcome.NOT_CONFIGURED}
     assert sink.alerts == []

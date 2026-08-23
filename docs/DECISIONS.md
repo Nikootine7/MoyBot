@@ -136,10 +136,81 @@ The repository remains private and no license file is added yet.
 
 ---
 
+## Phase 2 decisions
+
+All decisions below were approved by the project owner on 2026-08-23, together with Phase 2
+itself. They are **new** decisions made at that time; none of them was previously final in
+`PROJECT_SPEC.md`, and none of them resolves an OPEN QUESTION listed below.
+
+### DECISION — D-009 Offline time semantics
+
+**Status:** FINAL / DECIDED (replay scope)
+**Approved:** 2026-08-23 by project owner
+
+In replay runs, wall-clock time is the observation time supplied by the data source, injected as
+a clock. Wall-clock semantics from the operating system remain the behaviour for a future live
+source.
+
+Reasoning: staleness (`PROJECT_SPEC.md` §5, §10.8) measures the age of *information*. In Phase 1
+the tested path used a fixed clock while the CLI used the system clock, so the same fixture was
+fresh in tests and arbitrarily stale from the command line. Judging fixture data against the time
+the replay happens to run measures the age of the recording, not the age of the information.
+
+Consequence: a replay is deterministic and reproducible, including the date partition of
+provenance files. This decides nothing about the acceptable staleness *value*, which remains an
+OPEN QUESTION.
+
+### DECISION — D-010 Fixture schema v2
+
+**Status:** EXPERIMENTAL (Phase 2 artifact)
+**Approved:** 2026-08-23 by project owner
+
+The replay fixture schema gains a per-observation `validation_state` block describing the state a
+re-read at validation time would return. `schema_version` becomes `2` and v1 fixtures no longer
+load.
+
+Reasoning: `PROJECT_SPEC.md` §5 requires a re-check against *fresh* state immediately before
+acting. Offline, something has to describe what "fresh" returns; without it the check can only
+compare a snapshot with itself.
+
+Consequence: the fixture format remains EXPERIMENTAL and is explicitly **not** a provider
+contract (D-004 is unchanged). It implies nothing about which provider MOYBOT will use, or about
+how a live implementation obtains fresh state.
+
+### DECISION — D-011 Refresh is mandatory and fail-closed
+
+**Status:** FINAL / DECIDED
+**Approved:** 2026-08-23 by project owner
+
+Final pre-trade validation must re-read fresh state. A refresh that is unavailable, or that
+returns state outside the configured staleness limits, cancels. There is no fallback to the
+snapshot the decision was made on.
+
+Reasoning: `PROJECT_SPEC.md` §5 and §10.8 make acting on stale information the failure the gate
+exists to prevent. Falling back to the decision snapshot would make the gate pass precisely when
+it has the least information.
+
+Consequence: with no refresher configured, nothing is ever actioned. Making a previously
+unreachable path reachable is expected to produce more cancellations; that is the intended
+behaviour and is not to be relaxed by loosening a limit.
+
+### DECISION — D-012 Environment variables
+
+**Status:** FINAL / DECIDED
+**Approved:** 2026-08-23 by project owner
+
+`.env.example` is deleted. Phase 2 implements no environment-variable overrides; configuration
+is TOML and CLI flags only. An explicit environment-variable design may be decided later.
+
+Reasoning: the file advertised `MOYBOT_DATA_DIR` and `MOYBOT_LOG_LEVEL`, which no code read.
+Documented-but-absent configuration is worse than no documentation.
+
+---
+
 ## OPEN QUESTIONS (not decided)
 
-These remain open and are **not** resolved by anything in this file or in the Phase 1 code.
-None of them blocks Phase 1.
+These remain open and are **not** resolved by anything in this file or in the code. None of them
+blocked Phase 1, and D-009..D-012 were chosen so that none of them blocks Phase 2 either.
 
 - OPEN QUESTION — Exact Smart Wallet definition (`PROJECT_SPEC.md` §9). Phase 1 ships no
   detection logic, so it is not required yet; it is expected to be the first Phase 2 blocker.
@@ -153,3 +224,8 @@ None of them blocks Phase 1.
 - OPEN QUESTION — Snapshot and provenance retention/pruning policy.
 - OPEN QUESTION — Whether Bot C (§8) should be anticipated in the domain model. Phase 1 omits
   it entirely, since §8 marks it as future architecture only.
+- OPEN QUESTION — How a live implementation obtains fresh state at validation time, and where
+  "current slot" comes from once a live source exists. D-010 and D-011 decide the shape of the
+  port and its fail-closed behaviour, not the mechanism.
+- OPEN QUESTION — Whether refresh should be per-strategy (Bot A may want more re-verification
+  than Bot B). Phase 2 refreshes once per validation, per strategy, through one port.

@@ -3,7 +3,9 @@
 Phase 1 makes the pipeline in `PROJECT_SPEC.md` §2 executable end to end as a scaffold, offline
 and deterministically, without deciding a single undecided domain question.
 
-Read this together with `docs/DECISIONS.md` (D-001..D-008).
+Read this together with `docs/DECISIONS.md` (D-001..D-008). This document describes Phase 1 as it
+shipped; where Phase 2 changed something (final validation, replay time, the fixture schema), the
+current behaviour is in `docs/PHASE2_SCOPE.md`.
 
 ## In scope
 
@@ -41,8 +43,10 @@ staleness limits, latency targets, retention policies, and alert destinations be
 
 ## Fixture format (EXPERIMENTAL, not a provider contract)
 
-`tests/fixtures/*.json` drive the replay adapter. The schema is a Phase 1 artefact and will be
-replaced when a provider is chosen; it is not a claim about any provider's shape.
+`tests/fixtures/*.json` drive the replay adapter. The schema is a scaffold artefact and will be
+replaced when a provider is chosen; it is not a claim about any provider's shape. Phase 2 raised
+`schema_version` to `2` and added a validation-time state block (`docs/PHASE2_SCOPE.md`); the v1
+shape below no longer loads.
 
 ```json
 {

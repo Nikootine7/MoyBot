@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "no_event",
   "description": "Continuous data arrives but the source declares no event, so the pipeline must stop after the event-trigger stage (PROJECT_SPEC.md 2.2).",
   "updates": [
