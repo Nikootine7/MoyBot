@@ -12,6 +12,10 @@ PROJECT_SPEC.md §10.2. It says nothing about how a live implementation would ob
 
 A refresh either returns state or reports that none is available. There is no third answer:
 an unavailable refresh cancels (docs/DECISIONS.md D-011).
+
+A read is not an observation: it is merged onto known state to build the validation snapshot, and
+never written into continuous state, where it would become the baseline the next event is judged
+against.
 """
 
 from __future__ import annotations
@@ -21,7 +25,6 @@ from typing import Protocol, final
 
 from moybot.core.model.metrics import MetricFields
 from moybot.core.model.primitives import Pubkey, Slot, TimestampMs
-from moybot.core.state.cache_port import MetricsPatch
 
 __all__ = [
     "RefreshResult",
@@ -44,15 +47,6 @@ class RefreshedState:
     slot: Slot
     observed_at_ms: TimestampMs
     fields: MetricFields = ()
-
-    def to_patch(self) -> MetricsPatch:
-        """Convert the refreshed fields into a cache patch."""
-        return MetricsPatch(
-            mint=self.mint,
-            slot=self.slot,
-            observed_at_ms=self.observed_at_ms,
-            fields=self.fields,
-        )
 
 
 @final

@@ -58,7 +58,7 @@ def test_refreshed_state_carries_only_reported_fields() -> None:
         observed_at_ms=TimestampMs(1_750_000_000_000),
         fields=(("price", Decimal("2")),),
     )
-    assert [name for name, _ in state.to_patch().fields] == ["price"]
+    assert [name for name, _ in state.fields] == ["price"]
 
 
 def test_source_clock_has_no_time_before_an_observation() -> None:
