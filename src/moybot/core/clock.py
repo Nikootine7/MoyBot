@@ -10,9 +10,10 @@ from __future__ import annotations
 import time
 from typing import Protocol, final
 
+from moybot.core.errors import NotConfiguredError
 from moybot.core.model.primitives import TimestampMs
 
-__all__ = ["Clock", "FixedClock", "SystemClock"]
+__all__ = ["Clock", "FixedClock", "ObservedTimeClock", "SourceTimeClock", "SystemClock"]
 
 
 class Clock(Protocol):
@@ -23,6 +24,13 @@ class Clock(Protocol):
 
     def monotonic_ns(self) -> int:
         """Monotonic time in nanoseconds, for measuring durations."""
+
+
+class ObservedTimeClock(Clock, Protocol):
+    """A clock whose wall-clock time is supplied by the data source (docs/DECISIONS.md D-009)."""
+
+    def observe(self, observed_at_ms: TimestampMs) -> None:
+        """Report the time an observation was made at."""
 
 
 @final
@@ -61,3 +69,35 @@ class FixedClock:
 
     def set_now_ms(self, now_ms: TimestampMs) -> None:
         self._now_ms = now_ms
+
+
+@final
+class SourceTimeClock:
+    """Clock whose wall-clock time is the latest observation time reported by the source.
+
+    Replay runs judge staleness against the time the data was observed, not the time the replay
+    happens to run (docs/DECISIONS.md D-009). Reading the time before any observation has been
+    reported is an error rather than a guess: there is no defensible substitute.
+
+    Time never moves backwards. An observation older than one already reported does not rewind
+    the clock, so out-of-order observations cannot make later data look fresher than it is.
+    """
+
+    def __init__(self, monotonic_step_ns: int = 1_000) -> None:
+        self._now_ms: TimestampMs | None = None
+        self._monotonic_ns = 0
+        self._step_ns = monotonic_step_ns
+
+    def observe(self, observed_at_ms: TimestampMs) -> None:
+        if self._now_ms is None or observed_at_ms > self._now_ms:
+            self._now_ms = observed_at_ms
+
+    def now_ms(self) -> TimestampMs:
+        if self._now_ms is None:
+            msg = "no observation time has been reported to the source clock yet"
+            raise NotConfiguredError(msg)
+        return self._now_ms
+
+    def monotonic_ns(self) -> int:
+        self._monotonic_ns += self._step_ns
+        return self._monotonic_ns

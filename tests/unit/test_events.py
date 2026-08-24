@@ -12,12 +12,13 @@ import pytest
 
 from moybot.core.events.registry import DeclaredEventDetector, EventDetectorRegistry
 from moybot.core.model.event import Event, parse_event_kind
+from moybot.core.model.metrics import MetricValue
 from moybot.core.model.primitives import Slot, TimestampMs
 from moybot.core.model.update import MarketUpdate
 from tests.support import MINT_A
 
 
-def _update(*events: Event, **fields: object) -> MarketUpdate:
+def _update(*events: Event, **fields: MetricValue) -> MarketUpdate:
     return MarketUpdate(
         mint=MINT_A,
         slot=Slot(100),

@@ -33,7 +33,7 @@ from moybot.core.events.registry import EventDetectorRegistry
 from moybot.core.ingestion.source_port import MarketDataSource
 from moybot.core.model.alert import Alert
 from moybot.core.model.candidate import Candidate
-from moybot.core.model.decision import Decision, DecisionOutcome
+from moybot.core.model.decision import Decision, DecisionOutcome, ValidationResult
 from moybot.core.model.event import Event
 from moybot.core.model.primitives import JsonValue, Pubkey, Slot, TimestampMs
 from moybot.core.model.provenance import ProvenanceRecord
@@ -201,6 +201,21 @@ class PipelineRunner:
             )
             return tuple(records), (), ()
         self._snapshot_store.append(snapshot)
+        records.append(
+            self._record(
+                counter,
+                StageName.CONTINUOUS_DATA,
+                update.mint,
+                update.slot,
+                outcome="captured",
+                duration_us=snapshot_watch.duration_us,
+                detail={
+                    "observed_at_ms": int(snapshot.captured_at_ms),
+                    "sequence": snapshot.sequence,
+                    "reported_fields": [name for name, _ in update.metrics],
+                },
+            )
+        )
 
         with Stopwatch(self._clock) as delta_watch:
             delta = self._differ.diff(previous, snapshot)
@@ -350,7 +365,7 @@ class PipelineRunner:
                 candidate.snapshot.slot,
                 outcome=str(validation.outcome),
                 duration_us=validation_watch.duration_us,
-                detail={"strategy": strategy.name, "reason": validation.reason},
+                detail=_validation_detail(strategy.name, validation),
             )
         )
         if not validation.passed:
@@ -411,6 +426,58 @@ class PipelineRunner:
             duration_us=duration_us,
         )
         return record
+
+
+def _validation_detail(strategy: str, validation: ValidationResult) -> dict[str, JsonValue]:
+    """Record what final validation checked, so the outcome can be reconstructed (§4, §5)."""
+    refresh = validation.refresh
+    staleness = validation.staleness
+    checked = validation.checked_snapshot
+    return {
+        "strategy": strategy,
+        "reason": validation.reason,
+        "breached_limit": validation.breached_limit,
+        "refresh": (
+            None
+            if refresh is None
+            else {
+                "refresher": refresh.refresher,
+                "available": refresh.available,
+                "slot": int(refresh.slot) if refresh.slot is not None else None,
+                "observed_at_ms": (
+                    int(refresh.observed_at_ms) if refresh.observed_at_ms is not None else None
+                ),
+                "unavailable_reason": refresh.unavailable_reason,
+            }
+        ),
+        "checked_snapshot": (
+            None
+            if checked is None
+            else {
+                "slot": int(checked.slot),
+                "captured_at_ms": int(checked.captured_at_ms),
+                "sequence": checked.sequence,
+            }
+        ),
+        "staleness": (
+            None
+            if staleness is None
+            else {
+                "checked_at_ms": int(staleness.checked_at_ms),
+                "age_ms": staleness.age_ms,
+                "current_slot": int(staleness.current_slot),
+                "slot_lag": staleness.slot_lag,
+            }
+        ),
+        "compared": [
+            {
+                "field": comparison.field,
+                "at_decision": comparison.at_decision,
+                "at_validation": comparison.at_validation,
+            }
+            for comparison in validation.comparisons
+        ],
+    }
 
 
 @final

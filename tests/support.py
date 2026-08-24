@@ -12,11 +12,18 @@ from typing import final
 
 from moybot.core.delta.differ import SnapshotDiffer
 from moybot.core.filtering.chain import FilterChain
+from moybot.core.ingestion.refresh_port import RefreshedState, RefreshResult
 from moybot.core.model.candidate import Candidate, FilterVerdict
 from moybot.core.model.decision import Decision, DecisionOutcome
 from moybot.core.model.event import Event, parse_event_kind
 from moybot.core.model.features import Feature, FeatureSet
-from moybot.core.model.metrics import HolderDistribution, LpState, TokenMetrics, TokenState
+from moybot.core.model.metrics import (
+    HolderDistribution,
+    LpState,
+    MetricFields,
+    TokenMetrics,
+    TokenState,
+)
 from moybot.core.model.primitives import Pubkey, Slot, TimestampMs, parse_pubkey
 from moybot.core.model.snapshot import Snapshot
 
@@ -47,6 +54,60 @@ def metrics(**overrides: object) -> TokenMetrics:
     }
     base.update(overrides)
     return TokenMetrics(**base)  # type: ignore[arg-type]
+
+
+def metric_fields(source: TokenMetrics) -> MetricFields:
+    """Every field of ``source``, as reported fields, so a read can restate a whole state."""
+    return (
+        ("price", source.price),
+        ("price_change", source.price_change),
+        ("volume", source.volume),
+        ("buy_volume", source.buy_volume),
+        ("sell_volume", source.sell_volume),
+        ("liquidity", source.liquidity),
+        ("slippage_bps", source.slippage_bps),
+        ("holders", source.holders),
+        ("dev_transaction_count", source.dev_transaction_count),
+        ("dev_sold", source.dev_sold),
+        ("smart_wallet_transaction_count", source.smart_wallet_transaction_count),
+        ("smart_wallet_addresses", source.smart_wallet_addresses),
+        ("wallet_cluster_ids", source.wallet_cluster_ids),
+        ("token_state", source.token_state),
+        ("lp_state", source.lp_state),
+    )
+
+
+def refreshed(
+    token_metrics: TokenMetrics | None = None,
+    mint: Pubkey = MINT_A,
+    slot: int = 100,
+    observed_at_ms: int = 1_750_000_000_000,
+) -> RefreshedState:
+    """Build the answer to a validation-time read for tests."""
+    return RefreshedState(
+        mint=mint,
+        slot=Slot(slot),
+        observed_at_ms=TimestampMs(observed_at_ms),
+        fields=metric_fields(token_metrics if token_metrics is not None else metrics()),
+    )
+
+
+@final
+class StubRefresher:
+    """A fresh-state refresher with a caller-supplied answer."""
+
+    def __init__(self, result: RefreshResult, name: str = "stub_refresher") -> None:
+        self._result = result
+        self._name = name
+        self.calls: list[Pubkey] = []
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def refresh(self, mint: Pubkey) -> RefreshResult:
+        self.calls.append(mint)
+        return self._result
 
 
 def snapshot(

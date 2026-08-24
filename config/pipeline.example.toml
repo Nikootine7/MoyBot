@@ -1,4 +1,4 @@
-# MOYBOT Phase 1 example configuration.
+# MOYBOT example configuration.
 #
 # Every domain value that PROJECT_SPEC.md §9 lists as not final is commented out below. With a
 # value commented out, the affected component reports "not configured" and nothing advances.

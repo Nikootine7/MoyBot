@@ -2,6 +2,10 @@
 
 Builds the pipeline from configuration. This is the only place where concrete implementations are
 chosen, so that swapping the replay adapter for a real provider later touches one file.
+
+The fresh-state refresher is supplied by the caller together with the clock, because both belong
+to the data source (docs/DECISIONS.md D-009, D-011). With no refresher, final validation cancels
+everything: there is no fallback to the state the decision was made on.
 """
 
 from __future__ import annotations
@@ -20,6 +24,7 @@ from moybot.core.delta.differ import SnapshotDiffer
 from moybot.core.events.registry import DeclaredEventDetector, EventDetectorRegistry
 from moybot.core.filtering.accept_all import AcceptAllFilter
 from moybot.core.filtering.chain import FilterChain
+from moybot.core.ingestion.refresh_port import StateRefresher
 from moybot.core.pipeline.runner import PipelineRunner
 from moybot.core.scoring.weighted import WeightedScorer
 from moybot.core.snapshots.builder import SnapshotBuilder
@@ -58,6 +63,7 @@ def _weights(config: StrategyConfig) -> dict[str, Decimal] | None:
 def build_pipeline(
     config: AppConfig,
     clock: Clock | None = None,
+    refresher: StateRefresher | None = None,
     action_sink: ActionSink | None = None,
     snapshot_store: SnapshotStore | None = None,
     provenance_store: ProvenanceStore | None = None,
@@ -100,7 +106,9 @@ def build_pipeline(
     deterioration = config.validation.deterioration
     validator = MaterialDeteriorationValidator(
         builder=builder,
+        cache=cache,
         clock=resolved_clock,
+        refresher=refresher,
         staleness_policy=(
             StalenessPolicy(
                 max_snapshot_age_ms=staleness.max_snapshot_age_ms,

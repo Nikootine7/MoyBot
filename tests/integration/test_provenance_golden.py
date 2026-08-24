@@ -12,16 +12,15 @@ import json
 from decimal import Decimal
 from pathlib import Path
 
-from moybot.adapters.replay.source import ReplayDataSource
+from moybot.adapters.replay.session import open_replay
 from moybot.core.action.log_sink import CollectingAlertSink
 from moybot.core.analysis.registry import HeavyAnalysisRegistry
-from moybot.core.clock import FixedClock
 from moybot.core.delta.differ import SnapshotDiffer
 from moybot.core.events.registry import DeclaredEventDetector, EventDetectorRegistry
 from moybot.core.filtering.accept_all import AcceptAllFilter
 from moybot.core.filtering.chain import FilterChain
 from moybot.core.model.decision import DecisionOutcome
-from moybot.core.model.primitives import JsonValue, TimestampMs
+from moybot.core.model.primitives import JsonValue
 from moybot.core.pipeline.runner import PipelineRunner
 from moybot.core.serialization import to_json_value
 from moybot.core.snapshots.builder import SnapshotBuilder
@@ -34,7 +33,6 @@ from moybot.core.validation.material_deterioration import (
 )
 from tests.support import StubStrategy
 
-START_MS = TimestampMs(1_750_000_000_000)
 STALENESS = StalenessPolicy(max_snapshot_age_ms=60_000, max_slot_lag=10)
 DETERIORATION = DeteriorationPolicy(
     max_price_drop_fraction=Decimal("0.1"),
@@ -51,7 +49,8 @@ SCENARIO_NAME = "smart_wallet_buy.json"
 
 def run_scenario(fixture: Path) -> list[JsonValue]:
     """Replay a fixture and return its provenance records as JSON values."""
-    clock = FixedClock(START_MS)
+    session = open_replay(fixture)
+    clock = session.clock
     cache = InMemoryStateCache()
     builder = SnapshotBuilder(cache)
     provenance = InMemoryProvenanceStore()
@@ -67,7 +66,9 @@ def run_scenario(fixture: Path) -> list[JsonValue]:
         ],
         validator=MaterialDeteriorationValidator(
             builder=builder,
+            cache=cache,
             clock=clock,
+            refresher=session.refresher,
             staleness_policy=STALENESS,
             deterioration_policy=DETERIORATION,
         ),
@@ -75,7 +76,7 @@ def run_scenario(fixture: Path) -> list[JsonValue]:
         provenance_store=provenance,
         clock=clock,
     )
-    asyncio.run(runner.run_source(ReplayDataSource.from_file(fixture)))
+    asyncio.run(runner.run_source(session.source))
     return [to_json_value(record) for record in provenance.records]
 
 
@@ -99,7 +100,9 @@ def test_every_record_carries_full_context(fixture_dir: Path) -> None:
             "duration_us",
             "detail",
         }
-        assert record["occurred_at_ms"] == int(START_MS)
+        # Records are timestamped with the time the data was observed, not the time of the
+        # replay (docs/DECISIONS.md D-009).
+        assert record["occurred_at_ms"] in {1_750_000_000_400, 1_750_000_000_600}
         record_id = record["record_id"]
         assert isinstance(record_id, str)
         assert record_id.startswith(str(record["correlation_id"]))

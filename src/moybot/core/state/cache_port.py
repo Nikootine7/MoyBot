@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol, final
 
-from moybot.core.model.metrics import TokenMetrics, WalletHistory
+from moybot.core.model.metrics import MetricFields, TokenMetrics, WalletHistory
 from moybot.core.model.primitives import Pubkey, Slot, TimestampMs
 
 __all__ = ["CachedToken", "ContinuousStateCache", "MetricsPatch"]
@@ -40,7 +40,7 @@ class MetricsPatch:
     mint: Pubkey
     slot: Slot
     observed_at_ms: TimestampMs
-    fields: tuple[tuple[str, object], ...]
+    fields: MetricFields
 
 
 class ContinuousStateCache(Protocol):
