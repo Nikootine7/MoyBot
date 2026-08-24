@@ -5,6 +5,7 @@ from __future__ import annotations
 from itertools import count
 from typing import final
 
+from moybot.core.model.metrics import TokenMetrics
 from moybot.core.model.primitives import Pubkey, Slot, TimestampMs
 from moybot.core.model.snapshot import Snapshot
 from moybot.core.state.cache_port import ContinuousStateCache
@@ -43,12 +44,30 @@ class SnapshotBuilder:
         cached = self._cache.get(mint)
         if cached is None:
             return None
+        return self.capture_state(
+            mint,
+            cached.metrics,
+            slot if slot is not None else cached.last_slot,
+            captured_at_ms if captured_at_ms is not None else cached.last_updated_ms,
+        )
+
+    def capture_state(
+        self,
+        mint: Pubkey,
+        metrics: TokenMetrics,
+        slot: Slot,
+        captured_at_ms: TimestampMs,
+    ) -> Snapshot:
+        """Capture state the caller already holds, without reading or writing the cache.
+
+        Final validation needs a snapshot of a fresh read (PROJECT_SPEC.md §5). That read is not
+        an observation, so it must not enter continuous state, where it would become the baseline
+        for a later event's decision snapshot and delta (docs/DECISIONS.md D-011).
+        """
         return Snapshot(
             mint=mint,
-            slot=slot if slot is not None else cached.last_slot,
-            captured_at_ms=(
-                captured_at_ms if captured_at_ms is not None else cached.last_updated_ms
-            ),
+            slot=slot,
+            captured_at_ms=captured_at_ms,
             sequence=next(self._sequence),
-            metrics=cached.metrics,
+            metrics=metrics,
         )

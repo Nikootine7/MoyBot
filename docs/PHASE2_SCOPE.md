@@ -42,9 +42,12 @@ work.
 
 ## How a fresh read differs from an observation
 
-A refreshed read is *state*, not an observation from the stream. It updates continuous state so
-that the validation-time snapshot is complete, but it never becomes an event, never produces a
-delta, and never reaches scoring. Events still come only from the source (`AGENTS.md`).
+A refreshed read is *state*, not an observation from the stream. It is merged onto what continuous
+state already knows, so an unreported field keeps its last observed value, but the result is only
+ever a snapshot: continuous state itself is not written to. Otherwise the read would become the
+baseline for the next event's decision snapshot and delta, and the check would again be comparing
+a state against itself. A read never becomes an event, a delta, or a scored input; events still
+come only from the source (`AGENTS.md`).
 
 Smart-wallet fields in a refreshed read are the fields the source declares, exactly as in Phase 1.
 Phase 2 compares them; it does not define what a Smart Wallet is.

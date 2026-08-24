@@ -17,8 +17,9 @@ from moybot.core.clock import FixedClock
 from moybot.core.ingestion.refresh_port import RefreshResult, RefreshUnavailable
 from moybot.core.model.decision import Decision, DecisionOutcome, ValidationOutcome
 from moybot.core.model.metrics import LpState, TokenMetrics
-from moybot.core.model.primitives import Slot
+from moybot.core.model.primitives import Slot, TimestampMs
 from moybot.core.snapshots.builder import SnapshotBuilder
+from moybot.core.state.cache_port import MetricsPatch
 from moybot.core.state.memory_cache import InMemoryStateCache
 from moybot.core.validation.material_deterioration import (
     DeteriorationPolicy,
@@ -31,6 +32,7 @@ from tests.support import (
     WALLET_B,
     StubRefresher,
     candidate,
+    metric_fields,
     metrics,
     refreshed,
     snapshot,
@@ -259,6 +261,33 @@ def test_refresh_does_not_mutate_the_decision_snapshot(clock: FixedClock) -> Non
     validator.validate(decided, _DECISION, Slot(100))
     assert decided.snapshot.metrics == before
     assert decided.snapshot.metrics.price == Decimal("1")
+
+
+def test_refresh_does_not_enter_continuous_state(clock: FixedClock) -> None:
+    """A fresh read is not an observation: the next event must not be decided against it."""
+    cache = InMemoryStateCache()
+    observed = metrics()
+    cache.apply(
+        MetricsPatch(
+            mint=MINT_A,
+            slot=Slot(100),
+            observed_at_ms=TimestampMs(1_750_000_000_000),
+            fields=metric_fields(observed),
+        )
+    )
+    validator = MaterialDeteriorationValidator(
+        builder=SnapshotBuilder(cache),
+        cache=cache,
+        clock=clock,
+        refresher=StubRefresher(_fresh(price=Decimal("0.5"))),
+        staleness_policy=_STALENESS,
+        deterioration_policy=_DETERIORATION,
+    )
+    result = validator.validate(candidate(), _DECISION, Slot(100))
+    assert result.outcome is ValidationOutcome.CANCELLED
+    cached = cache.get(MINT_A)
+    assert cached is not None
+    assert cached.metrics == observed
 
 
 @pytest.mark.parametrize("zero_field", ["price", "liquidity"])

@@ -35,10 +35,12 @@ from moybot.core.model.decision import (
     ValidationResult,
     VolatileComparison,
 )
+from moybot.core.model.metrics import TokenMetrics
 from moybot.core.model.primitives import Pubkey, Slot
 from moybot.core.model.snapshot import Snapshot
 from moybot.core.snapshots.builder import SnapshotBuilder
 from moybot.core.state.cache_port import ContinuousStateCache
+from moybot.core.state.merge import merge_metrics
 
 __all__ = [
     "DeteriorationPolicy",
@@ -233,9 +235,7 @@ class MaterialDeteriorationValidator:
             observed_at_ms=refreshed.observed_at_ms,
         )
 
-        fresh = self._apply(refreshed)
-        if fresh is None:
-            return _cancel("refreshed state could not be captured as a snapshot", refresh=audit)
+        fresh = self._snapshot_of(refreshed)
 
         # The refreshed read may be ahead of the slot the event arrived on; the check is against
         # the most recent slot either of them has seen.
@@ -285,14 +285,23 @@ class MaterialDeteriorationValidator:
 
         return _compare(before, after, fresh, deterioration, audit, measured)
 
-    def _apply(self, refreshed: RefreshedState) -> Snapshot | None:
-        """Write the refreshed read into continuous state and capture it as a snapshot.
+    def _snapshot_of(self, refreshed: RefreshedState) -> Snapshot:
+        """Capture the refreshed read as a snapshot, leaving continuous state untouched.
 
-        The refreshed read is state, not an observation: it updates the cache so the snapshot is
-        a complete picture, but it never becomes an event, a delta, or a scored input.
+        The read is merged onto what is already known, so a field the read did not report keeps
+        its last observed value rather than becoming unknown. It is deliberately *not* written
+        back: continuous state must keep describing what the source observed, or the next event's
+        decision snapshot and delta would be built from a read no observation ever made -- and the
+        check would once again be comparing a state against itself.
         """
-        self._cache.apply(refreshed.to_patch())
-        return self._builder.capture(refreshed.mint)
+        cached = self._cache.get(refreshed.mint)
+        base = cached.metrics if cached is not None else TokenMetrics()
+        return self._builder.capture_state(
+            refreshed.mint,
+            merge_metrics(base, refreshed.fields),
+            refreshed.slot,
+            refreshed.observed_at_ms,
+        )
 
 
 def _cancel(
