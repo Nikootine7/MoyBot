@@ -207,6 +207,19 @@ Documented-but-absent configuration is worse than no documentation.
 
 ---
 
+## Phase 3 research decisions
+
+### DECISION — D-013 Initial research universe
+
+**Status:** FINAL / DECIDED (Phase 3 offline research scope)
+**Approved:** 2026-11-24 by project owner
+
+The first offline research and evaluation universe covers Solana token launch and pool activity across venues. Preserve source-reported venue/program, pool, and migration-stage labels separately. Missing labels remain unknown.
+
+Reasoning: the project owner approved broad all-venue research coverage to avoid locking the evaluation to one venue and to compare Bot A and Bot B evidence by market context.
+
+Consequence: D-013 decides research-dataset coverage only. It does not select a production provider, authorize network access, define Bot A/B production venue filters, define Smart Wallet, or introduce event or trading rules. D-004 remains unchanged.
+
 ## OPEN QUESTIONS (not decided)
 
 These remain open and are **not** resolved by anything in this file or in the code. None of them
