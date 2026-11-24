@@ -11,6 +11,16 @@
 - For one general leaderboard wallet, the wallet summary, positions, and recent-trade calls returned data. The summary includes realized and unrealized PnL, invested/proceeds, ROI, win rate, trade counts, average holding time, and an ROI distribution. Position rows include mint, PnL, holdings, trade counts, and first/last trade times. Recent-trade rows include token amounts, USD volume, venue, timestamp, and transaction signature.
 - The service-status tool reported all six listed components operational and no active incidents. The separate network-status call returned 403 Forbidden. That is an endpoint-specific access failure in this check, not evidence that the provider's services were down.
 
+## Additional bounded venue and launch probe
+
+A second read-only check on 2026-11-24 used the 1-hour market-statistics view and the launchpad listing tools:
+
+- Market statistics returned 15 market buckets, including an all-market aggregate and provider-defined venue and rollup rows. The sample contains parent/aggregate labels such as Raydium (All) and Meteora (All) alongside more specific Raydium and Meteora buckets. Do not sum aggregate and component rows as if they were disjoint.
+- The `stage=new` call returned five token rows. The rows included a source-reported market label and launchpad-curve percentage, but no pool ID, transaction signature, slot, or source first-seen timestamp. All five rows in this small sample carried the Pumpfun label; this does not establish complete or exclusive launchpad coverage.
+- The `stage=graduated` call returned HTTP 403 from the connected plugin endpoint. The earlier service-status result reported the listed service components operational, so this is an endpoint/tool-level access failure in this sample, not evidence of a provider-wide outage. Graduation-stage coverage remains unknown.
+
+These bounded outputs are useful for schema reconnaissance only. They do not establish venue completeness, disjoint market buckets, or an on-chain event ledger.
+
 ## Data-quality and coverage observations
 
 - Leaderboard and wallet-summary metrics are not interchangeable as exposed. For the sampled wallet, the leaderboard's period win-rate field was 100%, while the wallet summary returned 61.36% win rate and 62.5% token win rate. The periods and definitions are not sufficiently aligned to combine these into one score.
