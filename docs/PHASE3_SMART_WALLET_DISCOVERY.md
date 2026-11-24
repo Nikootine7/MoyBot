@@ -80,7 +80,8 @@ Before choosing a source, compare its supported trade fields and history against
 4. Compare candidate Solana data sources against that record and the required history, slot ordering, latency, and cost.
 5. Only then implement wallet-history ingestion and an evaluation module. Keep unknown or insufficient history distinct from a poor wallet score.
 
-## Questions for project owner
+## Owner input before implementation
 
-- Is there an existing candidate-wallet list or historical transaction export we can use for the data inventory?
-- Should the initial universe cover all Solana token venues, or begin with a specific launch or pool segment? This affects data coverage and must not be guessed.
+No candidate-wallet list or historical transaction export is available at this stage. Leaderboard results can seed manual research, but are provider-selected and are not a representative evaluation universe.
+
+The source decision brief records a proposed broad research scope across Solana token launch and pool activity, with venue and migration-stage labels preserved. The project owner can confirm that scope or edit it before a live adapter or evaluation dataset is implemented: [Phase 3 data-source decision brief](PHASE3_DATA_SOURCE_DECISION_BRIEF.md).
