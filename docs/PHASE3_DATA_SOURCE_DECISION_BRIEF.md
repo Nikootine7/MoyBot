@@ -50,7 +50,7 @@ Birdeye's [public Terms of Service](https://birdeye.so/data-api/terms-of-service
 
 ## Zero-euro route replacing the API-key checkout (research proposal)
 
-The current checkout path is paused. Continue immediate, analyst-led exploration through the already-connected read-only Solana Tracker plugin; a live check on 2026-11-24 returned three `stage=new` rows. These calls are useful for inspection in ChatGPT, but they do not create a bot credential, continuous feed, or direct runtime data source.
+The current checkout path is paused. Continue immediate, analyst-led exploration through the already-connected read-only Solana Tracker plugin; a fresh bounded `stage=new` page during this turn returned five rows. A direct DEX Screener public GET lookup, with no API key, returned a pair for each of those five known mints; all five reported `dexId=pumpfun` and their `pairCreatedAt` values matched Tracker's `createdAt` to the second. This qualifies lookup of known pooled tokens in this sample, not a complete feed. DEX Screener returned no liquidity object for any of the five, two rows had no USD price and zero swaps/volume, and at least two price snapshots differed materially from Tracker. The API response supplied no observation timestamp, so these differences cannot be attributed to provider accuracy or lag. The connected plugin is useful for inspection in ChatGPT, but it does not create a bot credential, continuous feed, or direct runtime data source.
 
 For a future no-key prototype, qualify a two-part public route before adding any network code:
 
