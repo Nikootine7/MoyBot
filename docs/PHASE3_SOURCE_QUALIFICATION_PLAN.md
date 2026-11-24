@@ -33,6 +33,7 @@ Once eligible access and an explicit provider decision exist:
 | Time and actionability | Chain event time, source first-seen time if supplied, local receipt time, and slot | Report observed lag distributions; do not infer a provider timestamp from local receipt |
 | History and pagination | Request bounds, cursor/offset, page boundaries, repeats, missing pages, errors, and endpoint limits | A completed pagination loop is not proof of retained or complete history |
 | Stream recovery | Last persisted slot/cursor, interruption boundary, replay/backfill result, duplicates, and gaps | Only test after account access is permitted; preserve unrecovered gaps explicitly |
+| Public WebSocket capture | Program/wallet address per `logsSubscribe` filter, commitment, slot/signature/logs, receive time, subscriptions and reconnect gaps | Logs are raw; decoding and recovery are MoyBot responsibilities, and public RPC is not production infrastructure |
 | Finality and reconciliation | Live commitment level, whether events can disappear or be replayed, rollback signals, and the REST reconciliation boundary | Do not treat provisional events as confirmed; preserve unresolved fork and replay gaps |
 | Wallet track record | Raw wallet trade history and separate provider PnL summaries | Treat provider PnL as a comparison field, not a ground-truth ledger |
 
