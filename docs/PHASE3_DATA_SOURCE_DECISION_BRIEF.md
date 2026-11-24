@@ -60,13 +60,17 @@ This is still only a bounded sample. It does not establish complete venue covera
 
 CoinGecko's [licensing guidance](https://support.coingecko.com/articles/1043089972-what-are-the-differences-between-commercial-and-custom-licenses) says its free/keyless API does not grant commercial-use rights; paid access is required for a commercial product. Treat this as a personal/research candidate only unless the eventual product's licensing is cleared.
 
-### DEX Screener and public RPC roles
+### Pre-pool candidate: public Solana RPC WebSocket
+
+Solana's official `logsSubscribe` supports a `mentions` filter for exactly one address and emits the transaction signature, slot, error, and raw program logs. The public mainnet PubSub URL is `wss://api.mainnet.solana.com` ([WebSocket method](https://solana.com/docs/rpc/websocket/logssubscribe), [connection example](https://solana.com/docs/payments/interacting-with-solana)). This creates a no-key research candidate for pre-pool launch events by subscribing to selected program addresses, and for wallet activity by subscribing to wallet addresses.
+
+The notifications are raw evidence, not normalized swaps. MoyBot would have to fetch each transaction, decode the relevant instructions/accounts, preserve slot/signature/instruction order, and handle duplicate notifications, forks, disconnects, and missed slots. Because the `mentions` filter accepts only one address, multiple programs or wallets require separate filters. The public endpoint is shared and rate-limited (documented limits include 100 requests/10 seconds per IP, 40 for one RPC, and 40 concurrent connections); Solana says limits may change and public RPC is not intended for production ([limits](https://solana.com/docs/references/clusters)). No SLA or guaranteed stream recovery is documented. This is suitable for an exploratory personal prototype, not a production feed.
+
+### DEX Screener role
 
 DEX Screener remains an optional known-pair cross-check, not the primary discovery source. A no-key lookup returned a pair for all five Tracker mints in the prior sample, but omitted liquidity for all five; two rows had no USD price and zero swaps/volume, and at least two price snapshots differed materially. With no observation timestamps, the sample cannot establish which source was more current.
 
-Solana's [public mainnet RPC](https://solana.com/docs/references/clusters) can complement the pool index with raw on-chain confirmation, but it is shared, rate-limited infrastructure and not intended for production. It does not provide indexed cross-venue pool enrichment, trade history, or recovery on its own; MoyBot would have to decode programs and handle gaps.
-
-Recommended immediate route: continue manual research through the connected plugin; for a future no-cost *personal research prototype*, qualify GeckoTerminal's keyless latest-pools endpoint first, with RPC reserved for targeted raw-chain validation and DEX Screener as an optional pair cross-check. The source is a proposal, not a production selection or a change to D-004. Do not create another API account or pay for a key to continue the current research.
+Recommended immediate route: continue manual research through the connected plugin. For a future no-cost *personal research prototype*, qualify public RPC `logsSubscribe` for raw pre-pool observations and GeckoTerminal's keyless latest-pools endpoint for post-pool, cross-venue enrichment. Keep DEX Screener as an optional known-pair cross-check. These remain research candidates, not production selections or changes to D-004. Do not create another API account or pay for a key to continue the current research.
 
 ## Fit against MoyBot's evidence needs
 
