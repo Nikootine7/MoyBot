@@ -84,4 +84,4 @@ Before choosing a source, compare its supported trade fields and history against
 
 No candidate-wallet list or historical transaction export is available at this stage. Leaderboard results can seed manual research, but are provider-selected and are not a representative evaluation universe.
 
-The source decision brief records a proposed broad research scope across Solana token launch and pool activity, with venue and migration-stage labels preserved. The project owner can confirm that scope or edit it before a live adapter or evaluation dataset is implemented: [Phase 3 data-source decision brief](PHASE3_DATA_SOURCE_DECISION_BRIEF.md).
+D-013 approves the initial offline research universe across Solana token launch and pool activity on all venues, preserving source-reported venue/program, pool, and migration-stage labels. This does not select a provider or set either bot's production venue filters. See the [Phase 3 data-source decision brief](PHASE3_DATA_SOURCE_DECISION_BRIEF.md).
