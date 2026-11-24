@@ -34,6 +34,16 @@ These bounded outputs are useful for schema reconnaissance only. They do not est
 
 These observations are from a small live capability check, not a representative coverage study. Wallets and metrics surfaced by a leaderboard are provider-selected and subject to winner-selection bias.
 
+## Launchpad-listing API documented beyond the plugin wrapper
+
+Official [New, Graduating and Graduated](https://docs.solanatracker.io/data-api/tokens/get-token-overview), [Graduating Tokens](https://docs.solanatracker.io/data-api/tokens/get-graduating-tokens), and [Graduated Tokens](https://docs.solanatracker.io/data-api/tokens/get-graduated-tokens) references describe these direct Data API routes:
+
+- `GET /tokens/multi/all` returns latest, graduating, and graduated categories in one response. Its documented `limit` defaults to 100 and has a maximum of 500 per category; filters include creation-time bounds, market, liquidity, market cap, and risk score. No page or cursor parameter is listed.
+- `GET /tokens/multi/graduating` lists graduating launchpad tokens (the documentation names Pump.fun, letsbonk.fun, and Jupiter Studio) and exposes `limit` plus curve, holder, creation-time, market, liquidity, and risk filters. No page or cursor parameter is listed.
+- `GET /tokens/multi/graduated` documents a `page` parameter (default 1) and a `limit` (default 100, maximum 500), plus creation-time, market, liquidity, and risk filters.
+
+The response schemas expose token creation fields (`creator`, `created_tx`, `created_time`) and pool fields including `poolId` and `market`. The schemas do not specify a source first-seen timestamp or explicit migration event signature and slot; an `events` object is listed without its subfields defined. A token's `created_tx` is under `token.creation`, so it must not be assumed to identify a later pool migration. These are documented direct-API fields, not fields verified in the ChatGPT plugin response. The Data API references require an `x-api-key`; no direct API call or account entitlement was tested, and D-004 remains in force.
+
 ## Underlying product API documented beyond the plugin wrapper
 
 The official [Wallet Trades API V2](https://docs.solanatracker.io/data-api/trades-v2/wallet/get-wallet-trades) documents a paginated REST history route. It supports cursor-based pages (up to 500 trades per page), time bounds, and ascending or descending order. Full trade records include transaction signature, slot, transaction and swap indices, token and quote legs, raw amount strings, owner balance changes, fees and tips, route, venue, and pool. The API requires an x-api-key header; its lighter basic mode omits several accounting fields.
