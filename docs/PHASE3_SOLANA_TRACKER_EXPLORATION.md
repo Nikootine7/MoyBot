@@ -46,6 +46,17 @@ Official [New, Graduating and Graduated](https://docs.solanatracker.io/data-api/
 
 The response schemas expose token creation fields (`creator`, `created_tx`, `created_time`) and pool fields including `poolId` and `market`. The schemas do not specify a source first-seen timestamp or explicit migration event signature and slot; an `events` object is listed without its subfields defined. A token's `created_tx` is under `token.creation`, so it must not be assumed to identify a later pool migration. These are documented direct-API fields, not fields verified in the ChatGPT plugin response. The Data API references require an `x-api-key`; no direct API call or account entitlement was tested, and D-004 remains in force.
 
+## Liquidity history and stream coverage documented by the provider
+
+The [Track Solana Liquidity Additions and Removals guide](https://docs.solanatracker.io/guides/liquidity) distinguishes the documented swap and liquidity paths:
+
+- The Trades V2 pool endpoint (`GET /v2/trades/{token}/{pool}`) provides pool-scoped swaps with transaction signature, slot, transaction index, swap index, raw token amounts, fee details, program, route and cursor pagination. It is for a known token/pool and is not a pool-discovery feed.
+- Liquidity additions/removals remain on legacy REST trade-history routes, including `events=all` and `events=liquidity`; the pool-specific route is marked deprecated for swaps, while the guide says liquidity events remain there. Pages use cursors and can contain `add_liquidity`/`remove_liquidity` rows with transaction signature, program/program ID, pool, wallet, time, slot, and exact amount strings.
+- Datastream documents liquidity rooms by token, token/pool, token/pool/wallet, pool, or wallet, and requires a Premium, Business, or Enterprise plan. Live events are provisional at processed commitment; they can disappear on a fork and the guide says there is no rollback notification. REST history is confirmed/finalized and is the documented reconciliation path. Overlapping room subscriptions may duplicate actions; no internal event ID is exposed, and one transaction can contain multiple liquidity actions.
+- Named supported instruction families include Raydium AMM v4/CPMM/CLMM, Orca Whirlpool, Pump AMM, Meteora DAMM v1/v2 and DLMM, Liquid Swap, and Futarchy. The guide excludes standalone fee/reward claims, LP-token mint/burn, rent, and unrelated transfers; coverage depends on instruction and available on-chain data.
+
+This is a documented subset of liquidity activity, not proof of exhaustive venue/program coverage. The required liquidity history still depends on a legacy REST route, and stream recovery, latency, retention, and territory/account eligibility are unverified. These docs do not authorize a direct adapter; D-004 remains in force.
+
 ## Underlying product API documented beyond the plugin wrapper
 
 The official [Wallet Trades API V2](https://docs.solanatracker.io/data-api/trades-v2/wallet/get-wallet-trades) documents a paginated REST history route. It supports cursor-based pages (up to 500 trades per page), time bounds, and ascending or descending order. Full trade records include transaction signature, slot, transaction and swap indices, token and quote legs, raw amount strings, owner balance changes, fees and tips, route, venue, and pool. The API requires an x-api-key header; its lighter basic mode omits several accounting fields.
