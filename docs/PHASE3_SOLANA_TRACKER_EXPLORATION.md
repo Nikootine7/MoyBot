@@ -31,7 +31,7 @@ KOL and whale streams are also documented, but they represent provider-defined c
 
 ## Plan and service terms (checked 2026-11-24)
 
-The [official pricing page](https://docs.solanatracker.io/pricing) lists Data API Free at €0 for 2,500 requests/month with no Datastream; Advanced at €50/month and Pro at €200/month also exclude Datastream. Premium is the first listed tier with Datastream (€397/month for 10 million requests); Business is €599/month and Enterprise is €1,499/month. Annual billing is listed as 30% cheaper for paid Data API plans. Prices can change and must be rechecked before any purchase. The plugin connection does not provide MoyBot with a separate API key or subscription.
+The [official pricing and limits page](https://docs.solanatracker.io/pricing) confirms Datastream is plan-gated and requires a separate Data API key. The connected ChatGPT plugin does not provide MoyBot with that key or a subscription. Current quotas and plan eligibility must be checked on the official page before any provider decision.
 
 The [Terms of Service](https://www.solanatracker.io/terms), last updated 2026-03-23, disclaim guarantees of uptime, latency, continuous availability, and data accuracy/completeness. They require compliance with applicable sanctions and export-control laws and say paid subscriptions may be processed through Stripe or Helio. The reviewed public terms do not name Iran or confirm regional/payment eligibility. Access from Iran therefore remains unverified; do not assume an API subscription can be opened or paid for.
 
