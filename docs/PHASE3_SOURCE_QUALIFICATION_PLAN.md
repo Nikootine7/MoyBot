@@ -6,7 +6,7 @@
 
 Before repeated provider access, record the provider legal entity, current terms version, territory/account eligibility, permitted use, restrictions on reuse or redistribution, and applicable data entitlements. This also applies to keyless public endpoints: review the free tier's license and rate limit before using it as a continuing source. A VPN exit location does not establish ordinary residence or contractual eligibility. If the terms or provider response do not clear eligibility, mark that source blocked or unknown rather than attempting access.
 
-Keep D-004 in force: no direct provider queries, API keys, network code, or execution path are introduced by this plan. Store any future credentials only in a user-controlled secret store; never place them in the repository or a fixture.
+Keep D-004 in force: this plan introduces no runtime provider adapter, persistent direct-provider queries, API key, network code, or execution path. Bounded read-only research queries used to evaluate a source are evidence only and are not part of MoyBot's runtime. Store any future credentials only in a user-controlled secret store; never place them in the repository or a fixture.
 
 ## Gate 1 — freeze a comparison capture
 
