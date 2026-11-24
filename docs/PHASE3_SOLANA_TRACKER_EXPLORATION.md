@@ -41,7 +41,7 @@ The connected plugin is useful for manual candidate discovery and schema reconna
 
 That is not yet a production-provider decision. Access requires a separate API key and eligible Datastream subscription; service quality, latency, historical coverage, reconnect/backfill behavior, endpoint metric definitions, and follower-execution accounting remain to be validated. Keep the repository offline under D-004 until a provider decision is explicitly made. Do not use leaderboard rows as approved Smart Wallets, training labels, or production signals.
 
-The Smart Wallet definition and venue universe remain open. No candidate-wallet list or historical export has been supplied; provider leaderboards are source-selected seeds, not a representative evaluation universe.
+D-013 approves the initial broad offline research universe across Solana token launch and pool activity; Bot A/B production venue filters remain open. No candidate-wallet list or historical export has been supplied; provider leaderboards are source-selected seeds, not a representative evaluation universe.
 
 ## Next research step
 
