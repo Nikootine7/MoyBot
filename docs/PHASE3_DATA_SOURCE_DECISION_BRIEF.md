@@ -10,6 +10,8 @@ The earlier project discussion confirms the intended principle: build the fastes
 
 A connected ChatGPT plugin can run bounded, read-only queries inside ChatGPT. That does not give MoyBot code a provider SDK, credentials, persistent stream, predictable observation time, or service contract. The runtime must eventually use an explicitly selected direct source. Until then, keep the repository offline under D-004.
 
+Current access status: you report that the Solana Tracker ChatGPT plugin is connected, but a direct provider API account or key is not confirmed. A Google/GitHub sign-in, if used, does not by itself establish API access or entitlements. Treat direct credentials as unavailable until access through a provider dashboard is specifically confirmed.
+
 ## Evidence gathered
 
 ### Solana Tracker
