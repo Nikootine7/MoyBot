@@ -15,18 +15,28 @@
 
 - Leaderboard and wallet-summary metrics are not interchangeable as exposed. For the sampled wallet, the leaderboard's period win-rate field was 100%, while the wallet summary returned 61.36% win rate and 62.5% token win rate. The periods and definitions are not sufficiently aligned to combine these into one score.
 - A sampled position reported $207,295.96 realized PnL with zero buys, zero invested, two sells, and null ROI. This cannot be treated as a verified net return with a known cost basis.
-- The wallet-level recent-trade response exposes a timestamp and signature, but no slot or first-observed time. The wrapper accepts a result limit but exposes no page cursor for this call, so it is not a demonstrated complete history feed.
+- The connected plugin wrapper's recent-trade call exposes a timestamp and signature but no slot or first-observed time, and accepts a result limit without a page cursor. This is a wrapper limitation; the underlying product API is broader, as documented below.
 - A KOL present in the leaderboard returned null fields in the wallet PnL summary and no rows from positions or recent trades. Leaderboard coverage therefore does not guarantee wallet-level history coverage.
 - Parsing one recent transaction signature failed because the RPC client reported transaction version 1 unsupported and requested maxSupportedTransactionVersion=1. The connected transaction tool exposes no parameter for that setting, so raw transaction verification was unavailable for that sample.
 
 These observations are from a small live capability check, not a representative coverage study. Wallets and metrics surfaced by a leaderboard are provider-selected and subject to winner-selection bias.
 
+## Underlying product API documented beyond the plugin wrapper
+
+The official [Wallet Trades API V2](https://docs.solanatracker.io/data-api/trades-v2/wallet/get-wallet-trades) documents a paginated REST history route. It supports cursor-based pages (up to 500 trades per page), time bounds, and ascending or descending order. Full trade records include transaction signature, slot, transaction and swap indices, token and quote legs, raw amount strings, owner balance changes, fees and tips, route, venue, and pool. The API requires an x-api-key header; its lighter basic mode omits several accounting fields.
+
+The official [Wallet Trades V2 Datastream](https://docs.solanatracker.io/datastream/websockets/wallettradesv2) documents a live wallet room carrying the V2 trade format; its page says to load history from REST. The [connection guide](https://docs.solanatracker.io/guides/datastream-protocol) says Datastream requires a Data API key and a Premium, Business, or Enterprise plan. It documents a 100,000-room limit per connection and closes a connection that falls more than 1 MiB behind. Reconnecting and rejoining is documented; a reconnect/backfill procedure still needs to be designed and validated. The reviewed pages do not establish a latency SLA or historical-retention bound, and pricing was not evaluated.
+
+KOL and whale streams are also documented, but they represent provider-defined cohorts (tracked KOL labels or USD-size tiers). They can provide candidate seeds, not MoyBot's final Smart Wallet definition. Token-wide streams require a mint to subscribe to, so they do not by themselves solve discovery across an unknown token universe.
+
 ## What this supports for MoyBot
 
-The plugin is useful for manual candidate discovery and for learning which fields a future source adapter would need to reconcile. It does not demonstrate the continuous event feed, slot-ordered history, completeness, first-seen latency, or follower-execution accounting needed to validate a production provider. It cannot establish a wallet's signal value at MoyBot's observation time.
+The connected plugin is useful for manual candidate discovery and schema reconnaissance. The underlying Solana Tracker products are a promising source to evaluate further because their documented REST and WebSocket interfaces expose fields that the plugin wrapper omits, including chain ordering and full trade accounting.
 
-Keep the repository offline under D-004. Do not use these leaderboard rows as approved Smart Wallets, training labels, or production signals. The Smart Wallet definition and venue universe remain open; the user has not supplied a wallet list or historical export.
+That is not yet a production-provider decision. Access requires a separate API key and eligible Datastream subscription; service quality, latency, historical coverage, reconnect/backfill behavior, endpoint metric definitions, and follower-execution accounting remain to be validated. Keep the repository offline under D-004 until a provider decision is explicitly made. Do not use leaderboard rows as approved Smart Wallets, training labels, or production signals.
+
+The Smart Wallet definition and venue universe remain open. No candidate-wallet list or historical export has been supplied; provider leaderboards are source-selected seeds, not a representative evaluation universe.
 
 ## Next research step
 
-Compare candidate sources against a provider-neutral inventory: trade identity and ordering (slot/signature), provider first-seen time, amount units and cost basis, historical depth and pagination, venue coverage, error behavior, freshness/latency evidence, and the information needed to estimate a follower's net return. Preserve missing or unsupported fields as unknown rather than zero. Only make a provider or ingestion decision after that comparison.
+Compare candidate sources against a provider-neutral inventory: trade identity and ordering (slot/signature), provider first-seen time, amount units and cost basis, historical depth and pagination, venue coverage, error behavior, freshness/latency evidence, reconnection and backfill, and the information needed to estimate a follower's net return. Preserve missing or unsupported fields as unknown rather than zero. Only make a provider or ingestion decision after that comparison.
