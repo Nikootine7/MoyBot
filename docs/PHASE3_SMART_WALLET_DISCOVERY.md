@@ -61,6 +61,17 @@ Luo et al. (2026), [“Resisting Manipulative Bots in Meme Coin Copy Trading”]
 
 **Limit:** the study is specific to pump.fun copy trading and its historical data and execution model. Its results do not establish MoyBot's wallet definition, provider, profitability, or live performance, and are not adopted as project targets.
 
+## Data-source research checkpoint (2026-11-24)
+
+This is evidence about currently documented options, not a provider decision or an implementation contract.
+
+- **Solana Tracker Data API (candidate only):** its [Wallet Trades V2 documentation](https://docs.solanatracker.io/data-api/trades-v2/wallet/get-wallet-trades) describes trades across a wallet's tokens, with transaction signature, slot, transaction and swap indexes, exact raw amounts for both legs on full pages, owner balance changes, fees, and tips. The endpoint documents cursor pagination, time bounds, sort direction, and up to 500 trades per page. The documentation does not establish the historical retention, completeness, venue coverage, or delivery latency needed by MoyBot; those remain unverified.
+- **Solana Tracker Datastream:** its [Wallet Trades V2 stream documentation](https://docs.solanatracker.io/datastream/websockets/wallettradesv2) describes a live wallet-trade stream. Stream messages omit REST cursor fields, and the docs direct clients to load history from REST. A live adapter would therefore need an explicit reconnect and backfill design before stream events could be treated as continuous evidence.
+- **Connected research tools:** the Solana Tracker MCP tools available in this workspace are read-only research tools; their availability does not provide a bot API key or establish an application data contract. Nova's [capability catalog](https://docs.novasolana.com/) is a snapshot of implemented tool coverage, not a live upstream entitlement check; its wallet-trade tool is bounded to a cursor page and does not claim complete transaction history. These tools can help inspect candidate data, but they do not establish a production feed.
+- **Access and cost:** the [Data API overview](https://docs.solanatracker.io/data-api/overview) currently documents an API key, a free allowance of 2,500 requests per month at 3 requests per second, and Datastream plan access beginning at Premium. This review did not verify the account's entitlement, the wallet-trades endpoint's credit cost, current paid pricing, or data-retention guarantees.
+
+Before choosing a source, compare its supported trade fields and history against the evaluation record, and verify the target venue universe, coverage/retention, recovery behavior, account entitlement, and operating cost. No provider is selected here.
+
 ## Proposed order of work
 
 1. Decide whether “Smart Wallet” is a historical wallet-quality label, an actionable event signal, or both. **Proposal:** preserve separate evidence for both questions.
