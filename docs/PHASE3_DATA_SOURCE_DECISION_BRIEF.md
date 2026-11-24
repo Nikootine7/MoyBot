@@ -10,7 +10,7 @@ The earlier project discussion confirms the intended principle: build the fastes
 
 A connected ChatGPT plugin can run bounded, read-only queries inside ChatGPT. That does not give MoyBot code a provider SDK, credentials, persistent stream, predictable observation time, or service contract. The runtime must eventually use an explicitly selected direct source. Until then, keep the repository offline under D-004.
 
-Current access status: you report that the Solana Tracker ChatGPT plugin is connected, but a direct provider API account or key is not confirmed. A Google/GitHub sign-in, if used, does not by itself establish API access or entitlements. Treat direct credentials as unavailable until access through a provider dashboard is specifically confirmed.
+Current access status: You report that the Solana Tracker Data API key flow requires a €1 verification/authentication payment with cancel-anytime wording. That user-observed checkout requirement takes precedence over generic free-tier marketing for this account; no payment has been made, and we will not ask you to pay for it. The connected Solana Tracker ChatGPT plugin is working for bounded, read-only research without that API-key checkout. Plugin access is not a direct credential or runtime entitlement for MoyBot.
 
 ## Evidence gathered
 
@@ -47,6 +47,18 @@ Birdeye's [Transactions API](https://data.birdeye.so/docs/data-api/transactions)
 The current [Helius Cloud Services Agreement](https://www.helius.dev/terms) limits service use to business purposes, prohibits personal/household/familial use, and requires the customer to represent that it is not ordinarily resident in a jurisdiction under comprehensive U.S. sanctions. Since this project has been treated as an individual project and you have previously said your residence is Iran, Helius eligibility is not cleared by the current documents; OFAC maintains an [Iran sanctions program](https://ofac.treasury.gov/sanctions-programs-and-country-information/iran-sanctions), while Helius's exact account eligibility still requires confirmation from the provider. This is a contract-based concern, not a legal determination. A VPN endpoint does not change the residence representation.
 
 Birdeye's [public Terms of Service](https://birdeye.so/data-api/terms-of-service), last updated 2025-04-11, require lawful use and accurate account information and restrict redistribution of its service/data. The reviewed public text does not give a clear Iran-specific access confirmation. Solana Tracker's Iran-specific eligibility also remains unverified. Treat access and any public/commercial reuse as unresolved for all three until the applicable account terms are confirmed.
+
+## Zero-euro route replacing the API-key checkout (research proposal)
+
+The current checkout path is paused. Continue immediate, analyst-led exploration through the already-connected read-only Solana Tracker plugin; a live check on 2026-11-24 returned three `stage=new` rows. These calls are useful for inspection in ChatGPT, but they do not create a bot credential, continuous feed, or direct runtime data source.
+
+For a future no-key prototype, qualify a two-part public route before adding any network code:
+
+- **DEX Screener API for post-pool enrichment.** Its official FAQ calls the API free, and the published request examples use ordinary GET requests without an API-key header. The [API reference](https://docs.dexscreener.com/api/reference) lists latest token profiles (60 requests/minute) and token/pair lookup routes (300 requests/minute); pair data can include price, transactions, liquidity, and `pairCreatedAt`. DEX Screener says tokens are listed after a liquidity pool exists and at least one transaction has occurred ([listing policy](https://docs.dexscreener.com/token-listing)). That makes it a useful pool/market enrichment source, but it cannot by itself supply pre-pool launch surveillance or a complete wallet-trade feed. Its [API terms](https://docs.dexscreener.com/api/api-terms-and-conditions) also need to be checked against MoyBot's intended use before adoption.
+- **Solana public RPC for raw on-chain observations.** The official mainnet endpoint is `https://api.mainnet.solana.com`; it does not require an API key. Solana documents shared public rate limits of up to 100 requests per 10 seconds per IP (40 for a single RPC), says the limits can change, and warns that public endpoints are not intended for production ([official endpoint and limits](https://solana.com/docs/references/clusters)). RPC can expose raw chain observations, but it does not supply an indexed, normalized, complete launch/pool feed or long-term backfill. Program decoding, reconnect handling, and gap reconciliation would remain MoyBot work.
+- **Birdeye remains a secondary free-plan candidate, not today's signup route.** Its public pricing page lists Standard at $0 with 30,000 compute units, 1 request/second, and limited endpoint access; its announcement says no credit card is required. The exact new-listing endpoint entitlement and account/territory eligibility have not been confirmed, so do not assume it avoids the same checkout/eligibility friction.
+
+Recommended route for now: use the connected plugin for manual research and keep MoyBot itself offline. If a zero-cost runtime prototype is later authorized, qualify public RPC plus DEX Screener against D-013 and the DEX Screener terms first. This is a research candidate, not a production-provider selection or a change to D-004.
 
 ## Fit against MoyBot's evidence needs
 
@@ -85,4 +97,4 @@ Unknown values remain null, not zero. A provider's PnL summary can help investig
 
 ## Next decision gate
 
-The offline research universe is approved. A source-neutral capture and comparison procedure is in [the qualification plan](PHASE3_SOURCE_QUALIFICATION_PLAN.md). It requires a same-window evidence sample, an independent reference before making completeness claims, and account/territory eligibility before provider access. Keep missing fields as unknown, and record a provider decision in the decision log before implementing network code.
+The offline research universe is approved. Use the already-connected read-only plugin for current manual research; no €1 API-key checkout is needed for that step. The no-key public RPC + DEX Screener route remains a candidate for qualification, not a selected production source. Follow [the source qualification plan](PHASE3_SOURCE_QUALIFICATION_PLAN.md), preserve missing fields as unknown, and keep D-004 in force until an explicit provider decision authorizes network code.
