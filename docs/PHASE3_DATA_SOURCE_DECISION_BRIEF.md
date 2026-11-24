@@ -1,6 +1,6 @@
 # Phase 3: Data-source decision brief
 
-**Status: RESEARCH / PROPOSED.** This brief compares the research tools available in ChatGPT with the direct data interfaces that a MoyBot runtime would require. It does not select a production provider, approve a venue universe, define Smart Wallet, or authorize network code.
+**Status: RESEARCH / PROPOSED.** This brief compares the research tools available in ChatGPT with the direct data interfaces that a MoyBot runtime would require. It does not select a production provider, define production venue filters, define Smart Wallet, or authorize network code.
 
 ## Preserve the original system goal
 
@@ -22,17 +22,38 @@ The underlying [Wallet Trades V2 REST API](https://docs.solanatracker.io/data-ap
 
 A read-only Nova smart-money query succeeded and returned one bounded page of five screened observations with trade time, wallet, token, action, market, amounts, and transaction signature. The response did not supply an observation timestamp. **Source observation freshness is unknown.** The tool warning says the sample is screened/labelled and is not every profitable trader or whale. The capability description also says there is no standalone smart-money discovery endpoint and no durable watch subscription. This supports manual research and bounded snapshots, not MoyBot's continuous event feed or a complete evaluation dataset.
 
+### Birdeye
+
+The official [new-listing API](https://data.birdeye.so/docs/data-api/tokenmarket-list/get-defi-v2-tokens-new-listing) supports Solana and returns provider-reported newly listed tokens. The endpoint allows up to 20 items per request; its Solana-specific `meme_platform_enabled` option covers meme-platform-aware discovery where supported, and its docs recommend frequent polling and deduplication. Birdeye also documents [New Token Listing](https://data.birdeye.so/docs/websockets/new-token-listing.md) and [New Pair](https://data.birdeye.so/docs/websockets/new-pair.md) WebSocket subscriptions. These are relevant to the approved launch-and-pool universe, but public docs do not establish exhaustive coverage or a guaranteed first-seen time.
+
+The [all-market list](https://data.birdeye.so/docs/data-api/tokenmarket-list/get-defi-v2-markets) is queried by a known mint and returns markets/pools for that token, with up to 20 results per page. It helps preserve venue and pool context after discovery; it is not an independent all-pool census.
+
+Birdeye's [Transactions API](https://data.birdeye.so/docs/data-api/transactions) documents recent and filtered chain-wide V3 trade feeds, time-bounded token/pair/wallet history, and token-level trade filters. V3 Solana trade examples include transaction hash, block number and time, instruction indexes, owner/signers, source, pool ID, and raw amount strings. This is a comparatively rich normalized event shape for cross-venue research. The legacy token-trades page has an internal pagination-bound discrepancy (50,000 in a usage note versus 10,000 in the parameter reference), so bounds must be confirmed against the selected V3 endpoint rather than inferred from the legacy endpoint.
+
+### Helius
+
+[LaserStream](https://www.helius.dev/laserstream) and its Yellowstone-compatible transaction/account filters provide lower-level event inputs for a multi-venue decoder. [Parsed Streams](https://www.helius.dev/docs/parsed-streams) and the [Parsed Events API](https://www.helius.dev/blog/parsed-events-and-streams) apply an IDL catalogue with raw fallbacks, but Helius documents these parsed products as open beta. This reduces decoding work for covered programs; it does not prove that every launchpad, pool program, route, and migration is decoded. Otherwise MoyBot would own and maintain those decoders.
+
+[Historical replay](https://www.helius.dev/docs/laserstream/historical-replay) is a stream-recovery window of about 48 hours, not long-term backfill; older replayed data is finalized-only. For history, [getTransactionsForAddress](https://www.helius.dev/docs/rpc/gettransactionsforaddress) paginates by address, but each address is queried separately and the docs describe special routing and slot-scan fallback cases. Helius therefore offers flexible raw visibility, with more ingestion/decoder work and no turnkey complete cross-venue trade ledger.
+
+### Account and regional eligibility
+
+The current [Helius Cloud Services Agreement](https://www.helius.dev/terms) limits service use to business purposes, prohibits personal/household/familial use, and requires the customer to represent that it is not ordinarily resident in a jurisdiction under comprehensive U.S. sanctions. Since this project has been treated as an individual project and you have previously said your residence is Iran, Helius eligibility is not cleared by the current documents; this is a contract-based concern to resolve with the provider before account use. A VPN endpoint does not change the residence representation.
+
+Birdeye's [public Terms of Service](https://birdeye.so/data-api/terms-of-service), last updated 2025-04-11, require lawful use and accurate account information and restrict redistribution of its service/data. The reviewed public text does not give a clear Iran-specific access confirmation. Solana Tracker's Iran-specific eligibility also remains unverified. Treat access and any public/commercial reuse as unresolved for all three until the applicable account terms are confirmed.
+
 ## Fit against MoyBot's evidence needs
 
 | Need | What current research access can establish | Remaining gap |
 | --- | --- | --- |
-| Candidate seeds | Public leaderboard, KOL, whale, and screened signal samples | Provider-defined selection is not a representative wallet universe |
-| Event order | Direct Solana Tracker V2 docs describe slot, transaction index, and swap index | Plugin wrappers and the Nova sample do not establish this ordering end to end |
-| Wallet track record | PnL summaries and positions exist in both research contexts | Metric definitions, cost basis, cohort coverage, and accounting treatment need reconciliation |
-| Actionable event value | Recent trades and trade timestamps are visible | No validated first-observed latency, follower fill, or net-return replay |
-| Continuous feed | Solana Tracker documents REST plus Datastream | Separate key/plan, reconnect and gap repair, and delivery behavior remain unvalidated |
-| Historical evaluation | Some cursor-paginated pages are documented | No verified retention/completeness contract or representative labelled dataset |
-| Venue context | Trade rows can identify venue/pool in the direct V2 product | The initial research universe has not been approved |
+| Candidate seeds | Solana Tracker launch/leaderboard views; Birdeye new-listing/new-pair feeds; bounded Nova samples | Provider indexes and curated cohorts may omit activity; no representative universe has been measured |
+| Event order | Solana Tracker V2 documents slot, transaction index, and swap index; Birdeye V3 documents block number/time and instruction indexes; Helius exposes transaction streams | No cross-provider order reconciliation or complete same-slot ordering has been validated |
+| Wallet track record | Solana Tracker and Nova expose wallet-level summaries/positions; Birdeye documents wallet trade history and PnL endpoints | Accounting definitions, cost basis, missing history, and cohort coverage need reconciliation |
+| Actionable event value | Birdeye and Helius document live feeds; Solana Tracker documents wallet-trade streaming | No comparable source-first-seen latency, MoyBot receive-time sample, or follower-fill replay exists |
+| Continuous feed | Solana Tracker Datastream; Birdeye listing, pair, and wallet WebSockets; Helius LaserStream/Parsed Streams | Reconnect/gap behavior, entitlements, and data loss are not validated in MoyBot |
+| Historical evaluation | Cursor/paginated wallet history at Solana Tracker; Birdeye V3 recent/archive and time-bounded trade endpoints; Helius per-address history | Retention and completeness guarantees are unverified; Helius stream replay alone covers only about 48 hours |
+| Venue context | Birdeye returns source/pool labels; Solana Tracker returns platform/pool fields; Helius gives program/account instructions for decoding | Provider labels, on-chain programs, pool IDs, and migration stages must remain separate; none proves universal venue coverage |
+| Account and territory | Public terms reveal explicit Helius use/residence conditions; Birdeye and Solana Tracker still need account-specific eligibility confirmation | VPN location does not establish contractual eligibility; no account/API access was tested |
 
 A provider-selected leaderboard must not become the only source of labels: that would measure how a curated ranking performs, not whether MoyBot can discover useful wallets from the intended universe.
 
@@ -58,4 +79,4 @@ Unknown values remain null, not zero. A provider's PnL summary can help investig
 
 ## Next decision gate
 
-The offline research universe is approved. Continue comparing direct sources on history coverage, chain ordering, first-observed time, pagination/backfill, raw amount and fee semantics, venue coverage, data quality, service limits, and legal/account eligibility. Keep missing fields as unknown. Record a provider decision in the decision log before implementing network code.
+The offline research universe is approved. The next provider comparison needs a small, same-window evidence sample to check event duplicates, source/pool/migration labels, same-slot ordering, pagination/backfill, raw amount and fee semantics, and receive-time lag. Account/territory eligibility must be cleared before any API key or paid access is considered. Keep missing fields as unknown, and record a provider decision in the decision log before implementing network code.
