@@ -87,6 +87,12 @@ The response included pair addresses, base and quote token identities, transacti
 
 Interpretation: the route is useful for looking up known pooled tokens and preserving pair-level context, but this sample does not qualify DEX Screener as a liquidity source, a pre-pool launch detector, or a substitute for raw event/history coverage. Preserve both source records and keep unexplained differences visible.
 
+## Keyless GeckoTerminal latest-pools check
+
+During this turn, a direct GET to `/api/v2/networks/solana/new_pools?include=base_token,quote_token,dex` returned 20 Solana pool records without an API key. The rows exposed pool addresses, `pool_created_at`, base/quote token identities, DEX labels, USD/native prices, FDV, transaction and volume windows, and `reserve_in_usd`. The bounded response included provider labels for Pump.fun, PumpSwap, Meteora DAMM V2, and Raydium LaunchLab. This shows the route can return cross-venue pool observations in one request; it does not establish exhaustive venue coverage or a first-seen/receive-time latency.
+
+All returned rows had `market_cap_usd=null`; several reserve/volume combinations were unusual, so these remain provider-reported values that need validation. The endpoint's response did not include a separate observation timestamp. The API is beta, and official pages conflict on its free request limit: the CoinGecko support answer updated 2026-11-23 says 30 calls/minute, while the product landing page describes 10 to 250 calls/minute. For planning, use the lower 10/minute figure until the live limit is confirmed. The same official licensing guidance says the free/keyless tier does not grant commercial-use rights; this route is only a personal/research candidate unless MoyBot's eventual use is licensed.
+
 ## Next research step
 
 Compare candidate sources against a provider-neutral inventory: trade identity and ordering (slot/signature), provider first-seen time, amount units and cost basis, historical depth and pagination, venue coverage, error behavior, freshness/latency evidence, reconnection and backfill, and the information needed to estimate a follower's net return. Preserve missing or unsupported fields as unknown rather than zero. Only make a provider or ingestion decision after that comparison.
