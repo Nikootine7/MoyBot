@@ -93,6 +93,12 @@ During this turn, a direct GET to `/api/v2/networks/solana/new_pools?include=bas
 
 All returned rows had `market_cap_usd=null`; several reserve/volume combinations were unusual, so these remain provider-reported values that need validation. The endpoint's response did not include a separate observation timestamp. The API is beta, and official pages conflict on its free request limit: the CoinGecko support answer updated 2026-11-23 says 30 calls/minute, while the product landing page describes 10 to 250 calls/minute. For planning, use the lower 10/minute figure until the live limit is confirmed. The same official licensing guidance says the free/keyless tier does not grant commercial-use rights; this route is only a personal/research candidate unless MoyBot's eventual use is licensed.
 
+## Pre-pool raw-event candidate: public Solana RPC
+
+Official Solana docs describe `logsSubscribe` over WebSocket and its `mentions` filter for a single address. A notification includes `context.slot`, transaction `signature`, `err`, and raw `logs`. The public mainnet WebSocket endpoint is `wss://api.mainnet.solana.com`. This is a no-key candidate for observing transactions involving one selected program or wallet address at a time; it is not a parsed launch/trade feed.
+
+A runtime would still need per-program/per-wallet filters, transaction fetching and instruction decoding, source-receive timestamps, fork-aware handling, duplicate suppression, and gap reconciliation. Public RPC has shared limits and no production SLA; official docs list up to 100 requests/10 seconds per IP, 40 per single RPC, and 40 concurrent connections, with limits subject to change. No runtime query or code was added to the repository.
+
 ## Next research step
 
 Compare candidate sources against a provider-neutral inventory: trade identity and ordering (slot/signature), provider first-seen time, amount units and cost basis, historical depth and pagination, venue coverage, error behavior, freshness/latency evidence, reconnection and backfill, and the information needed to estimate a follower's net return. Preserve missing or unsupported fields as unknown rather than zero. Only make a provider or ingestion decision after that comparison.
