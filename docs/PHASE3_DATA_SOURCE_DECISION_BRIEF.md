@@ -40,6 +40,22 @@ A provider-selected leaderboard must not become the only source of labels: that 
 
 For the first offline comparison, I propose including Solana token launch and pool activity across venues while preserving launchpad, pool, and migration stage as separate labels. This follows the existing Solana-only scope and the prior Pump.fun/Jupiter/GMGN discussion, while letting Bot A's confirmation evidence and Bot B's early-event evidence be evaluated separately. It is a proposal only; it does not narrow or finalize either bot's production universe.
 
+## Proposed normalized trade observation
+
+This is a provider-neutral schema proposal for comparing sources, not an approved domain contract or wallet score.
+
+| Field group | Preserve | Why |
+| --- | --- | --- |
+| Event identity and order | Solana signature, token mint, wallet, owner and fee payer separately; slot, transaction index, swap index | Deduplicate events and order same-slot swaps without treating a payer as the token-balance owner |
+| Event time | Chain event time, source first-seen time, and MoyBot receive time as separate nullable values | Measure how late the signal becomes actionable; a missing observation time stays unknown |
+| Swap amounts | Token and quote mints, raw amount strings, decimals, prices, and any reported USD notional | Preserve exact units and avoid using rounded provider PnL as the underlying ledger |
+| Costs and route | Network/priority fees, tips, platform fee plus fee mint, program, platform, pools, and route | Estimate net return and distinguish the on-chain program from the user-facing trading app |
+| Source coverage | Endpoint/schema version, page cursor, pagination state, partial/sampled warnings, and missing-field notes | Make history gaps and source limitations visible in replay and provenance |
+
+The Solana Tracker V2 wallet-trade documentation exposes most of these trade fields, but not a guaranteed source first-seen time or an availability/completeness contract. In the Nova sample, chain ordering and observed-at time were absent. **Source observation freshness is unknown.**
+
+Unknown values remain null, not zero. A provider's PnL summary can help investigate a wallet, but trade-level cost basis, fees, and event timing must be assessed separately. Keep wallet track record and the value of one actionable event as separate evaluations. Do not add a Smart Wallet threshold, weights, or a live event detector here.
+
 ## Next decision gate
 
 Before adding any live adapter, the project owner should confirm or edit that broad research scope. Then compare direct sources on history coverage, chain ordering, first-observed time, pagination/backfill, raw amount and fee semantics, venue coverage, data quality, service limits, and legal/account eligibility. Keep missing fields as unknown. Record a provider decision in the decision log before implementing network code.
