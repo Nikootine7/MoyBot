@@ -36,9 +36,9 @@ A read-only Nova smart-money query succeeded and returned one bounded page of fi
 
 A provider-selected leaderboard must not become the only source of labels: that would measure how a curated ranking performs, not whether MoyBot can discover useful wallets from the intended universe.
 
-## Proposed research scope
+## Approved initial research scope
 
-For the first offline comparison, I propose including Solana token launch and pool activity across venues while preserving launchpad, pool, and migration stage as separate labels. This follows the existing Solana-only scope and the prior Pump.fun/Jupiter/GMGN discussion, while letting Bot A's confirmation evidence and Bot B's early-event evidence be evaluated separately. It is a proposal only; it does not narrow or finalize either bot's production universe.
+D-013, approved 2026-11-24, sets the first offline research and evaluation universe to Solana token launch and pool activity across venues. Preserve source-reported venue/program, pool, and migration-stage labels separately, and keep missing labels unknown. This follows the existing Solana-only scope and prior Pump.fun/Jupiter/GMGN discussion, while letting Bot A's confirmation evidence and Bot B's early-event evidence be evaluated separately. D-013 does not set either bot's production venue filters.
 
 ## Proposed normalized trade observation
 
@@ -58,4 +58,4 @@ Unknown values remain null, not zero. A provider's PnL summary can help investig
 
 ## Next decision gate
 
-Before adding any live adapter, the project owner should confirm or edit that broad research scope. Then compare direct sources on history coverage, chain ordering, first-observed time, pagination/backfill, raw amount and fee semantics, venue coverage, data quality, service limits, and legal/account eligibility. Keep missing fields as unknown. Record a provider decision in the decision log before implementing network code.
+The offline research universe is approved. Continue comparing direct sources on history coverage, chain ordering, first-observed time, pagination/backfill, raw amount and fee semantics, venue coverage, data quality, service limits, and legal/account eligibility. Keep missing fields as unknown. Record a provider decision in the decision log before implementing network code.
