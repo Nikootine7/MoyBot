@@ -20,6 +20,8 @@ A second read-only check on 2026-11-24 used the 1-hour market-statistics view an
 - The `stage=graduating` call returned five rows labelled `meteora-curve` with a source-reported `launchpadCurvePct`. They had no pool ID, signature, slot, or source first-seen time, so the provider's stage label is not itself proof that an on-chain migration occurred.
 - The `stage=graduated` call returned HTTP 403 from the connected plugin endpoint. The earlier service-status result reported the listed service components operational, so this is an endpoint/tool-level access failure in this sample, not evidence of a provider-wide outage. Graduation-stage coverage remains unknown.
 
+A later recheck on 2026-11-24 returned 403 Forbidden for `stage=new` (`limit=10`), with no rows. The same recheck returned five `stage=graduating` rows, all labelled `meteora-curve`; each lacked a pool ID, signature, and slot. The rows had `createdAt`, but this sample does not establish that field as source-first-seen time. The status endpoint reported all six listed components operational and no active incidents. The endpoint-level 403 therefore does not establish a provider-wide outage. A separate Nova `new_pairs` sample returned five rows labelled Pumpfun, but it cannot serve as a cross-provider completeness comparison because the feed semantics differ and the Tracker `stage=new` read failed.
+
 These bounded outputs are useful for schema reconnaissance only. They do not establish venue completeness, disjoint market buckets, or an on-chain event ledger.
 
 ## Data-quality and coverage observations
