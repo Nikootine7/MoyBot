@@ -17,6 +17,7 @@ A second read-only check on 2026-11-24 used the 1-hour market-statistics view an
 
 - Market statistics returned 15 market buckets, including an all-market aggregate and provider-defined venue and rollup rows. The sample contains parent/aggregate labels such as Raydium (All) and Meteora (All) alongside more specific Raydium and Meteora buckets. Do not sum aggregate and component rows as if they were disjoint.
 - The `stage=new` call returned five token rows. The rows included a source-reported market label and launchpad-curve percentage, but no pool ID, transaction signature, slot, or source first-seen timestamp. All five rows in this small sample carried the Pumpfun label; this does not establish complete or exclusive launchpad coverage.
+- The `stage=graduating` call returned five rows labelled `meteora-curve` with a source-reported `launchpadCurvePct`. They had no pool ID, signature, slot, or source first-seen time, so the provider's stage label is not itself proof that an on-chain migration occurred.
 - The `stage=graduated` call returned HTTP 403 from the connected plugin endpoint. The earlier service-status result reported the listed service components operational, so this is an endpoint/tool-level access failure in this sample, not evidence of a provider-wide outage. Graduation-stage coverage remains unknown.
 
 These bounded outputs are useful for schema reconnaissance only. They do not establish venue completeness, disjoint market buckets, or an on-chain event ledger.
