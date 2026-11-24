@@ -79,6 +79,14 @@ That is not yet a production-provider decision. Access requires a separate API k
 
 D-013 approves the initial broad offline research universe across Solana token launch and pool activity; Bot A/B production venue filters remain open. No candidate-wallet list or historical export has been supplied; provider leaderboards are source-selected seeds, not a representative evaluation universe.
 
+## No-key pair lookup check
+
+During this turn, a fresh bounded `stage=new` plugin page returned five rows. A direct DEX Screener public GET lookup for those five known mints, with no API key, returned one Solana pair for each. All five pair rows reported `dexId=pumpfun`, matching the Tracker page's source-reported `market=pumpfun`; each DEX `pairCreatedAt` also matched the corresponding Tracker `createdAt` to the second. This establishes that the no-key lookup worked for these five already-known mints in this session, not that the endpoint is a complete launch feed or that it detects first-seen time.
+
+The response included pair addresses, base and quote token identities, transaction counts, volume, and pair creation time. It returned no `liquidity` object for any of the five. Two rows had no USD price and reported zero swaps/volume, while the Tracker page still showed nonzero quoted price/liquidity. At least two other price snapshots differed materially between the sources. The API response had no observation timestamp and the calls were not atomic; market movement or indexing timing cannot be separated from a source-data discrepancy. One pair used a non-SOL quote mint, reinforcing that quote mint must be preserved per pool.
+
+Interpretation: the route is useful for looking up known pooled tokens and preserving pair-level context, but this sample does not qualify DEX Screener as a liquidity source, a pre-pool launch detector, or a substitute for raw event/history coverage. Preserve both source records and keep unexplained differences visible.
+
 ## Next research step
 
 Compare candidate sources against a provider-neutral inventory: trade identity and ordering (slot/signature), provider first-seen time, amount units and cost basis, historical depth and pagination, venue coverage, error behavior, freshness/latency evidence, reconnection and backfill, and the information needed to estimate a follower's net return. Preserve missing or unsupported fields as unknown rather than zero. Only make a provider or ingestion decision after that comparison.
