@@ -4,7 +4,7 @@
 
 ## Gate 0 — account and access eligibility
 
-Before creating an account or API key, record the provider legal entity, current terms version, territory/account eligibility, permitted use, restrictions on reuse or redistribution, and the account's available data entitlements. A VPN exit location does not establish ordinary residence or contractual eligibility. If the terms or provider response do not clear eligibility, mark that source blocked or unknown rather than attempting access.
+Before repeated provider access, record the provider legal entity, current terms version, territory/account eligibility, permitted use, restrictions on reuse or redistribution, and applicable data entitlements. This also applies to keyless public endpoints: review the free tier's license and rate limit before using it as a continuing source. A VPN exit location does not establish ordinary residence or contractual eligibility. If the terms or provider response do not clear eligibility, mark that source blocked or unknown rather than attempting access.
 
 Keep D-004 in force: no direct provider queries, API keys, network code, or execution path are introduced by this plan. Store any future credentials only in a user-controlled secret store; never place them in the repository or a fixture.
 
