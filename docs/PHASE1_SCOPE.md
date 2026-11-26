@@ -21,8 +21,11 @@ current behaviour is in `docs/PHASE2_SCOPE.md`.
 | Bot A / Bot B (§6, §7) | Two separate strategies with separate configuration, no shipped thresholds |
 | Final validation (§5) | Fail-closed re-check against fresh state; no shipped limits |
 | Action (§9) | Alert-only structured log sink |
+| CLI presentation | User-facing replay summary and alert message support English and Persian; structured event names and provenance stay language-neutral |
 | Provenance (§4) | Append-only NDJSON record per stage, including rejections and cancellations |
 | Ingestion | Replay/fixture adapter only |
+
+Language selection is presentation-only (D-014): it localizes the human-readable CLI summary and alert message, not machine event names, decision reasons, or provenance.
 
 ## Out of scope
 
