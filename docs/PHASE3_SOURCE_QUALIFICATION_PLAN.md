@@ -6,6 +6,8 @@
 
 Before repeated provider access, record the provider legal entity, current terms version, territory/account eligibility, permitted use, restrictions on reuse or redistribution, and applicable data entitlements. This also applies to keyless public endpoints: review the free tier's license and rate limit before using it as a continuing source. A VPN exit location does not establish ordinary residence or contractual eligibility. If the terms or provider response do not clear eligibility, mark that source blocked or unknown rather than attempting access.
 
+Current findings (2026-11-26): GeckoTerminal terms require users not to reside, be domiciled in, or access from a listed excluded country; CoinGecko’s current list includes Iran. PumpPortal lists Iran as a prohibited locality and expressly prohibits VPN/IP circumvention. Mark both blocked for the current project eligibility scope. DEX Screener’s territory and ongoing-use terms are not cleared; do not repeat the earlier bounded lookup until cleared. These are provider-term findings, not a legal determination.
+
 Keep D-004 in force: this plan introduces no runtime provider adapter, persistent direct-provider queries, API key, network code, or execution path. Bounded read-only research queries used to evaluate a source are evidence only and are not part of MoyBot's runtime. Store any future credentials only in a user-controlled secret store; never place them in the repository or a fixture.
 
 ## Gate 1 — freeze a comparison capture
