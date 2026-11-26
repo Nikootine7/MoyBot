@@ -124,7 +124,7 @@ D-013's all-venue research scope cannot be inferred from one RPC subscription. T
 
 ## Initial program coverage inventory
 
-The [Phase 3 program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) records the first mainnet-beta IDL/program set for Pump, Raydium, Meteora, and Orca. It is explicitly incomplete: venue-brand aliases and the Liquid Swap/Futarchy IDs named in the liquidity guide still need primary-source mapping. The inventory defines decoder evidence to collect without selecting a provider or relaxing D-004.
+The [Phase 3 program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) records the first mainnet-beta IDL/program set for Pump, Raydium, Meteora, and Orca. It is explicitly incomplete: additional venue families and venue-brand/config aliases still need primary-source mapping. The inventory defines decoder evidence to collect without selecting a provider or relaxing D-004.
 
 ## Next research step
 
