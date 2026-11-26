@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import final
+from collections.abc import Callable
+from typing import Any, final
 
 import structlog
 
@@ -19,23 +20,26 @@ class LogAlertSink:
     External alert destinations are an OPEN QUESTION; nothing here sends over a network.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, message_formatter: Callable[[Alert], str] | None = None) -> None:
         self._logger = structlog.get_logger("moybot.alert")
+        self._message_formatter = message_formatter
 
     @property
     def name(self) -> str:
         return "log_alert_sink"
 
     def emit(self, alert: Alert) -> None:
-        self._logger.info(
-            "alert_raised",
-            correlation_id=alert.correlation_id,
-            mint=alert.mint,
-            strategy=alert.decision.strategy,
-            raised_at_ms=int(alert.raised_at_ms),
-            decision=to_json_value(alert.decision),
-            validation=to_json_value(alert.validation),
-        )
+        fields: dict[str, Any] = {
+            "correlation_id": alert.correlation_id,
+            "mint": alert.mint,
+            "strategy": alert.decision.strategy,
+            "raised_at_ms": int(alert.raised_at_ms),
+            "decision": to_json_value(alert.decision),
+            "validation": to_json_value(alert.validation),
+        }
+        if self._message_formatter is not None:
+            fields["message"] = self._message_formatter(alert)
+        self._logger.info("alert_raised", **fields)
 
 
 @final
