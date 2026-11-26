@@ -111,6 +111,10 @@ The Solana Tracker V2 wallet-trade documentation exposes most of these trade fie
 
 Unknown values remain null, not zero. A provider's PnL summary can help investigate a wallet, but trade-level cost basis, fees, and event timing must be assessed separately. Keep wallet track record and the value of one actionable event as separate evaluations. Do not add a Smart Wallet threshold, weights, or a live event detector here.
 
+## Initial venue/program coverage map
+
+The [program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) maps an initial, explicitly incomplete set of Pump, Raydium, Meteora, and Orca programs to the launch, pool, and migration events a decoder would need to qualify. Liquid Swap/Futarchy IDs and some venue-brand mappings remain unresolved. This is offline research only; it does not select a provider or authorize network integration.
+
 ## Next decision gate
 
 The offline research universe is approved. Use the already-connected read-only plugin for current manual research; no €1 API-key checkout is needed for that step. Public Solana RPC remains a technical candidate for qualification; DEX Screener is blocked pending provider clarification. Follow [the source qualification plan](PHASE3_SOURCE_QUALIFICATION_PLAN.md), preserve missing fields as unknown, and keep D-004 in force until an explicit provider decision authorizes network code.
