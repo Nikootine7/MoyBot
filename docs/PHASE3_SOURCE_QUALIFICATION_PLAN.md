@@ -34,10 +34,18 @@ Once eligible access and an explicit provider decision exist:
 | Amounts and costs | Raw token/quote values, decimals, fee amount and mint, and source UI amount | Reconcile unit semantics and transaction-level versus swap-level fees before calculating net return |
 | Time and actionability | Chain event time, source first-seen time if supplied, local receipt time, and slot | Report observed lag distributions; do not infer a provider timestamp from local receipt |
 | History and pagination | Request bounds, cursor/offset, page boundaries, repeats, missing pages, errors, and endpoint limits | A completed pagination loop is not proof of retained or complete history |
-| Stream recovery | Last persisted slot/cursor, interruption boundary, replay/backfill result, duplicates, and gaps | Only test after account access is permitted; preserve unrecovered gaps explicitly |
-| Public WebSocket capture | Program/wallet address per `logsSubscribe` filter, commitment, slot/signature/logs, receive time, subscriptions and reconnect gaps | Logs are raw; decoding and recovery are MoyBot responsibilities, and public RPC is not production infrastructure |
+| Stream recovery | Per-address checkpoint, interruption boundary, replay/backfill result, duplicates, and gaps | Public logs have no documented replay cursor; use paginated `getSignaturesForAddress` (max 1,000/request) as a recovery attempt, not a completeness guarantee |
+| Public WebSocket capture | One program/wallet address per `logsSubscribe` mentions filter, commitment, slot/signature/logs, local receive time, subscription count and reconnect gaps | Logs are raw; the filter holds one address, decoding and recovery are MoyBot responsibilities, and public RPC is not production infrastructure |
 | Finality and reconciliation | Live commitment level, whether events can disappear or be replayed, rollback signals, and the REST reconciliation boundary | Do not treat provisional events as confirmed; preserve unresolved fork and replay gaps |
 | Wallet track record | Raw wallet trade history and separate provider PnL summaries | Treat provider PnL as a comparison field, not a ground-truth ledger |
+
+## Public RPC feasibility finding (2026-11-26)
+
+The public Solana mainnet HTTP/PubSub endpoints require no project API key, but Solana documents them as shared, rate-limited, and not for production. The logged limits are volatile; current pages list 100 requests per 10 seconds per IP, 40 per single RPC, 40 concurrent connections per IP, and 100 MB per 30 seconds. Verify actual reachability and service terms from the intended environment before repeated capture.
+
+For low-latency study, `processed` logs are provisional and may be skipped; full transaction retrieval through `getTransaction` requires confirmed/finalized commitment, with `maxSupportedTransactionVersion: 1` set for v1 support. Therefore event receipt and decoded transaction availability can occur at different times. Preserve both local receipt time and chain slot, and retain a provisional/finality state.
+
+A reconnect must backfill each watched address using `getSignaturesForAddress` pages of at most 1,000 results, then fetch and decode transactions. The public documentation does not promise archival retention or complete recovery. The all-venue universe also needs a separately versioned program/decoder registry; one `mentions` subscription does not imply cross-venue completeness. This supports only a bounded alert-only experiment proposal; it does not change D-004.
 
 ## Gate 3 — produce the comparison result
 
