@@ -13,13 +13,14 @@ from __future__ import annotations
 import tomllib
 from decimal import Decimal
 from pathlib import Path
-from typing import final
+from typing import Literal, final
 
 from pydantic import BaseModel, ConfigDict, Field
 
 __all__ = [
     "AppConfig",
     "DeteriorationConfig",
+    "DisplayConfig",
     "HeavyAnalysisConfig",
     "LoggingConfig",
     "StalenessConfig",
@@ -45,6 +46,12 @@ class LoggingConfig(_StrictModel):
     """Structured logging settings."""
 
     level: str = "INFO"
+
+
+class DisplayConfig(_StrictModel):
+    """Language for user-facing CLI messages (docs/DECISIONS.md D-014)."""
+
+    language: Literal["en", "fa"] = "en"
 
 
 class HeavyAnalysisConfig(_StrictModel):
@@ -112,6 +119,7 @@ class AppConfig(_StrictModel):
 
     storage: StorageConfig = Field(default_factory=StorageConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    display: DisplayConfig = Field(default_factory=DisplayConfig)
     heavy_analysis: HeavyAnalysisConfig = Field(default_factory=HeavyAnalysisConfig)
     strategies: StrategiesConfig = Field(default_factory=StrategiesConfig)
     validation: ValidationConfig = Field(default_factory=ValidationConfig)
