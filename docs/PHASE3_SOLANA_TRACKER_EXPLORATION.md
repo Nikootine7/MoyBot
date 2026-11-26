@@ -102,11 +102,25 @@ A bounded Solana Tracker plugin request for `stage=new`, `limit=3`, returned thr
 
 This is a small current page from the connected research plugin, not a complete launch census, independent ground truth, or proof of continuous coverage.
 
-## Pre-pool raw-event candidate: public Solana RPC
+## Public Solana RPC feasibility check (2026-11-26)
 
-Official Solana docs describe `logsSubscribe` over WebSocket and its `mentions` filter for a single address. A notification includes `context.slot`, transaction `signature`, `err`, and raw `logs`. The public mainnet WebSocket endpoint is `wss://api.mainnet.solana.com`. This is a no-key candidate for observing transactions involving one selected program or wallet address at a time; it is not a parsed launch/trade feed.
+Official Solana docs give the public mainnet endpoint as HTTP `https://api.mainnet.solana.com` and PubSub `wss://api.mainnet.solana.com`. Solana Labs operates the public endpoint; it needs no project API key, but it is shared, rate-limited, has no SLA, and is explicitly not intended for production. The published limits include 100 requests per 10 seconds per IP, 40 per single RPC, 40 concurrent connections per IP, and 100 MB per 30 seconds; Solana says limits may change and IPs may be blocked. This establishes a no-key technical path, not uninterrupted service or eligibility from the intended execution environment. Sources: [RPC connection example](https://solana.com/docs/payments/interacting-with-solana), [public endpoint limits](https://solana.com/docs/references/clusters).
 
-A runtime would still need per-program/per-wallet filters, transaction fetching and instruction decoding, source-receive timestamps, fork-aware handling, duplicate suppression, and gap reconciliation. Public RPC has shared limits and no production SLA; official docs list up to 100 requests/10 seconds per IP, 40 per single RPC, and 40 concurrent connections, with limits subject to change. No runtime query or code was added to the repository.
+### Live event path
+
+`logsSubscribe` can filter by `mentions` for exactly one address per subscription. Notifications include slot, signature, error, and raw logs; they are not decoded swaps or pool events. Omitted commitment defaults to finalized. `processed` can surface a provisional trigger earlier, but Solana describes processed data as the node's newest view, which may be skipped. Retain those events as provisional and reconcile later; do not let a provisional log become an irreversible action. Source: [logsSubscribe](https://solana.com/developers/docs/rpc/websocket/logssubscribe).
+
+### Disconnect recovery and transaction decoding
+
+The WebSocket docs do not define a replay cursor for logs notifications. Treat a disconnect as a possible gap: persist a signature/slot checkpoint for each watched address, then backfill with `getSignaturesForAddress`, paging with `before`/ `until` (maximum 1,000 signatures per request), deduplicate, and fetch transactions for parsing. This is only a recovery attempt: the public endpoint gives no history-retention or complete-backfill guarantee, and each new venue program needs its own address checkpoint. Source: [getSignaturesForAddress](https://solana.com/docs/rpc/http/getsignaturesforaddress).
+
+For transaction fetches, the current docs support versions 0 and 1; requests must set `maxSupportedTransactionVersion: 1` to include v1. `getTransaction` accepts confirmed/finalized commitment and can return null before a transaction is available there, so a processed log can arrive before full transaction decoding is possible. The direct RPC method exposes the needed option; a ChatGPT plugin wrapper that omits it is a separate limitation. Sources: [getTransaction](https://solana.com/docs/rpc/http/gettransaction), [versioned transaction guidance](https://solana.com/docs/core/transactions/versioned-transactions).
+
+### Coverage and verdict
+
+D-013's all-venue research scope cannot be inferred from one RPC subscription. The prototype would need a versioned registry of program IDs and decoders for launch, pool creation, swaps, liquidity changes, and migrations; preserve source program/venue/pool labels separately; and report unknown coverage. Each `mentions` filter holds one address, so the number of subscriptions and their aggregate message volume must be measured before choosing a topology.
+
+**Verdict:** public RPC is a plausible no-key, no-checkout route for a bounded alert-only experiment. It is not a production feed, and coverage, request budget, history recovery, regional reachability, and source-use eligibility remain unqualified. No endpoint was contacted and no runtime code was added; D-004 remains in force.
 
 ## Next research step
 
