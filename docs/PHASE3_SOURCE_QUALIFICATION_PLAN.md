@@ -60,6 +60,10 @@ Return a source-by-source evidence matrix with:
 
 Do not introduce numeric pass thresholds, weights, or a provider ranking without an explicit project decision. A provider recommendation must explain its missing evidence and must not claim universal venue coverage from a sample.
 
+## Program and decoder coverage gate
+
+Use the [initial program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) as a dated starting list, not as proof of D-013 completeness. For every source and venue family, record the mainnet program ID, authoritative IDL/schema revision, supported launch/swap/liquidity/migration instructions, inner/CPI handling, and replayable transaction signatures. Keep branded venue aliases separate from the underlying program. Unmapped families and missing fields remain unknown; do not report universal coverage from this initial list.
+
 ## Decision gate
 
 After the comparison, document the evidence and recommendation in the decision brief. A provider decision must be explicitly approved and recorded before adding network code. Until then, the result remains research-only and D-004 remains unchanged.
