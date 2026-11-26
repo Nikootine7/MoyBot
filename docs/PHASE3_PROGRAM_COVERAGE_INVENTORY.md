@@ -20,8 +20,12 @@
 | Meteora DAMM v2 / cp-amm | `cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG` | Constant-product/dynamic-fee pools, including DBC migration destination | [Meteora DAMM v2 developer guide](https://docs.meteora.ag/developer-guides/damm-v2/) |
 | Meteora DLMM | `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo` | Bin-based pools, swaps, and liquidity positions | [Meteora DLMM program/event reference](https://docs.meteora.ag/developer-guides/dlmm/program/events) |
 | Orca Whirlpools | `whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc` | Concentrated-liquidity pools, swaps, and liquidity positions | [Orca Whirlpools repository](https://github.com/orca-so/whirlpools) |
+| Liquid bonding curve | `LiquidsqH2a9gsPRf1M2QFhFqfLXWYTDZGzbsNQCDux` | Token launch, curve trades, and migration | [Liquid protocol overview](https://docs.liquid.af/protocol/overview); [official IDL/program IDs](https://docs.liquid.af/sdk/idl) |
+| Liquid Swap | `SwapMXcpJdXgnFG9BZak2fBZUiNeR2qYxzexF2ZxdW8` | Graduated CPMM pools, swaps, deposits, and withdrawals | [Liquid protocol overview](https://docs.liquid.af/protocol/overview); [official IDL/program IDs](https://docs.liquid.af/sdk/idl) |
+| MetaDAO Launchpad v0.7 | `moontUzsdepotRGe5xsfip7vLPTJnVuafqdUWexVnPM` | Launchpad program listed as current v0.7 by MetaDAO | [MetaDAO program addresses](https://metadao.com/docs/protocol-analytics) |
+| MetaDAO Futarchy v0.6 | `FUTARELBfJfQ8RDGhg1wdhddq1odMAJUePHFuBYfUxKq` | Futarchy program address listed by MetaDAO for v0.6; verify active deployment/version before using | [MetaDAO program addresses](https://metadao.com/docs/protocol-analytics) |
 
-These rows are a useful first registry, not a complete universe. Solana Tracker's liquidity guide also names Liquid Swap and Futarchy, but this inventory has not yet confirmed their program IDs and authoritative decoder/IDL sources. Other protocols and newly deployed programs may be absent.
+These rows are a useful first registry, not a complete universe. Liquid and MetaDAO rows are sourced from their respective protocol docs; preserve the published version labels, and verify the current deployment before relying on them. Other protocols, versions, and newly deployed programs may be absent.
 
 ## Venue labels are not always program IDs
 
@@ -42,7 +46,7 @@ A program-address match by itself is not a decoded trade or a pool event. Anchor
 
 ## Gaps and next qualification work
 
-1. Add authoritative IDL/program references for Liquid Swap, Futarchy, and other discovered families before claiming the D-013 universe is covered.
+1. Confirm the remaining D-013 protocol families and versions against authoritative references; this bounded list does not prove complete venue coverage.
 2. Resolve launchpad-brand-to-config mappings (including any aliases surfaced by the source), separately from the shared program registry.
 3. Build a per-family instruction matrix and collect confirmed transaction signatures for replay; measure which lifecycle events are missed or ambiguous.
 4. Only after source access and D-004 are explicitly resolved, qualify a bounded ingestion path and backfill/reconnect behavior. Public RPC's one-address-per-`logsSubscribe` filter makes the registry size and per-address request/message budget part of that experiment.
