@@ -242,3 +242,17 @@ blocked Phase 1, and D-009..D-012 were chosen so that none of them blocks Phase 
   port and its fail-closed behaviour, not the mechanism.
 - OPEN QUESTION — Whether refresh should be per-strategy (Bot A may want more re-verification
   than Bot B). Phase 2 refreshes once per validation, per strategy, through one port.
+
+
+## CLI presentation decisions
+
+### DECISION — D-014 CLI language selection
+
+**Status:** FINAL / DECIDED (current CLI presentation)
+**Approved:** 2026-11-26 by project owner
+
+The current MOYBOT CLI supports English (`en`) and Persian (`fa`) for its human-readable replay summary and alert message. TOML `[display].language` selects the persistent language; `--language` overrides it for one run. English remains the application default to preserve current behavior. The example configuration selects Persian.
+
+Reasoning: the project owner explicitly requested Persian support alongside the existing English interface. Keeping language at the presentation edge adds Persian output without changing pipeline decisions or machine-readable audit data.
+
+Consequence: JSON event names and field keys, decision reason values, metrics, and provenance remain language-neutral. This decision covers the current CLI summary and alert message; it does not define an external alert destination or a future graphical interface.
