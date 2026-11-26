@@ -46,7 +46,10 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--data-dir",
         type=Path,
         default=None,
-        help="override the directory for snapshots and provenance / مسیر ذخیره‌سازی snapshot و provenance",
+        help=(
+            "override the directory for snapshots and provenance / "
+            "مسیر ذخیره‌سازی snapshot و provenance"
+        ),
     )
     parser.add_argument(
         "--language",
