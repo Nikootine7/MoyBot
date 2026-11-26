@@ -113,7 +113,7 @@ Unknown values remain null, not zero. A provider's PnL summary can help investig
 
 ## Initial venue/program coverage map
 
-The [program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) maps an initial, explicitly incomplete set of Pump, Raydium, Meteora, and Orca programs to the launch, pool, and migration events a decoder would need to qualify. Liquid Swap/Futarchy IDs and some venue-brand mappings remain unresolved. This is offline research only; it does not select a provider or authorize network integration.
+The [program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) maps an initial, explicitly incomplete set of Pump, Raydium, Meteora, and Orca programs to the launch, pool, and migration events a decoder would need to qualify. Additional venue families and some venue-brand/config mappings remain unresolved. This is offline research only; it does not select a provider or authorize network integration.
 
 ## Next decision gate
 
