@@ -87,11 +87,20 @@ The response included pair addresses, base and quote token identities, transacti
 
 Interpretation: the route is useful for looking up known pooled tokens and preserving pair-level context, but this sample does not qualify DEX Screener as a liquidity source, a pre-pool launch detector, or a substitute for raw event/history coverage. Preserve both source records and keep unexplained differences visible.
 
-## Keyless GeckoTerminal latest-pools check
+## Provider eligibility check — GeckoTerminal and PumpPortal (2026-11-26)
 
-During this turn, a direct GET to `/api/v2/networks/solana/new_pools?include=base_token,quote_token,dex` returned 20 Solana pool records without an API key. The rows exposed pool addresses, `pool_created_at`, base/quote token identities, DEX labels, USD/native prices, FDV, transaction and volume windows, and `reserve_in_usd`. The bounded response included provider labels for Pump.fun, PumpSwap, Meteora DAMM V2, and Raydium LaunchLab. This shows the route can return cross-venue pool observations in one request; it does not establish exhaustive venue coverage or a first-seen/receive-time latency. It is a pool feed, so it does not cover a bonding-curve launch before a DEX pool exists; Bot B's pre-pool discovery remains unresolved.
+Current official terms disqualify both from the active source shortlist:
 
-All returned rows had `market_cap_usd=null`; several reserve/volume combinations were unusual, so these remain provider-reported values that need validation. The endpoint's response did not include a separate observation timestamp. The API is beta, and official pages conflict on its free request limit: the CoinGecko support answer updated 2026-11-23 says 30 calls/minute, while the product landing page describes 10 to 250 calls/minute. For planning, use the lower 10/minute figure until the live limit is confirmed. The same official licensing guidance says the free/keyless tier does not grant commercial-use rights; this route is only a personal/research candidate unless MoyBot's eventual use is licensed.
+- **GeckoTerminal / CoinGecko:** GeckoTerminal terms incorporate API terms and require users not to reside, be domiciled in, or access from a jurisdiction on the excluded-country list. The current list includes Iran. The API is described as free subject to its API terms, which does not override the territory restriction. The earlier keyless latest-pools sample is withdrawn from the research recommendation and its data is not retained here. Do not query this endpoint further for this project. Sources: [GeckoTerminal terms](https://www.geckoterminal.com/terms-conditions), [excluded-country list](https://support.coingecko.com/articles/1193865412-excluded-countries-list).
+- **PumpPortal:** its terms list Iran as a prohibited locality and explicitly prohibit VPN/IP circumvention. Do not connect or attempt to bypass the restriction. The service docs distinguish free `subscribeNewToken` and `subscribeMigration` streams from metered token/account trade streams; the latter require an API key and a linked wallet funded with at least 0.02 SOL and cost 0.01 SOL per 10,000 websocket messages. Free launch/migration events do not change eligibility. Sources: [terms](https://pumpportal.fun/legal/), [real-time data docs](https://pumpportal.fun/data-api/real-time/), [fees](https://pumpportal.fun/fees/).
+
+These findings describe provider terms, not a legal determination. DEX Screener remains unqualified for territory and ongoing-use terms; its prior known-pair sample is historical only and must not be repeated until Gate 0 is cleared.
+
+## Current manual plugin recheck (2026-11-26)
+
+A bounded Solana Tracker plugin request for `stage=new`, `limit=3`, returned three rows, all labeled `market=pumpfun`, with provider `createdAt` values from 2026-11-26 09:43:47Z to 09:43:56Z. The response exposed mint, name, symbol, price, market cap, liquidity, holders, risk score, launchpad-curve percentage, market label, and creation time. It did not include pool ID, transaction signature, slot, or source first-seen/observation time. The `createdAt` field must not be treated as an observation timestamp.
+
+This is a small current page from the connected research plugin, not a complete launch census, independent ground truth, or proof of continuous coverage.
 
 ## Pre-pool raw-event candidate: public Solana RPC
 
