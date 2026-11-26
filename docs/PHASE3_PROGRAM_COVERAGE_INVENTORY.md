@@ -27,6 +27,10 @@
 
 These rows are a useful first registry, not a complete universe. Liquid and MetaDAO rows are sourced from their respective protocol docs; preserve the published version labels, and verify the current deployment before relying on them. The Liquid Swap address is the one documented by Liquid.af; its exact equivalence to any third-party provider's venue label has not been independently checked. Other protocols, versions, and newly deployed programs may be absent.
 
+## Bounded address sanity check
+
+On 2026-11-26, the connected read-only Solana Tracker account-info tool resolved all 16 addresses in the table with `exists=true`, `executable=true`, and owner `BPFLoaderUpgradeab1e11111111111111111111111`. Three calls initially returned a wrapper-level `Forbidden`; individual retries succeeded. The tool has no cluster selector and did not return a deployed-code hash, so this is only an address/executable sanity check. It does not verify mainnet deployment/version, current activity, IDL compatibility, or decoder/event coverage.
+
 ## Venue labels are not always program IDs
 
 A branded launchpad can use a shared underlying program. Jupiter's official [Studio overview](https://developers.jup.ag/docs/studio/index.md) describes token launches on Dynamic Bonding Curve pools; record the Jupiter Studio venue attribution separately from the Meteora DBC program ID. A program match alone cannot prove a launchpad brand. Capture platform/config accounts or source-provided venue labels and leave attribution unknown until the mapping is verified. Likewise, identify a migration from the transaction's actual instructions and destination pool/program; do not infer it from the launchpad name.
