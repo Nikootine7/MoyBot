@@ -122,6 +122,10 @@ D-013's all-venue research scope cannot be inferred from one RPC subscription. T
 
 **Verdict:** public RPC is a plausible no-key, no-checkout route for a bounded alert-only experiment. It is not a production feed, and coverage, request budget, history recovery, regional reachability, and source-use eligibility remain unqualified. No endpoint was contacted and no runtime code was added; D-004 remains in force.
 
+## Initial program coverage inventory
+
+The [Phase 3 program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) records the first mainnet-beta IDL/program set for Pump, Raydium, Meteora, and Orca. It is explicitly incomplete: venue-brand aliases and the Liquid Swap/Futarchy IDs named in the liquidity guide still need primary-source mapping. The inventory defines decoder evidence to collect without selecting a provider or relaxing D-004.
+
 ## Next research step
 
 Compare candidate sources against a provider-neutral inventory: trade identity and ordering (slot/signature), provider first-seen time, amount units and cost basis, historical depth and pagination, venue coverage, error behavior, freshness/latency evidence, reconnection and backfill, and the information needed to estimate a follower's net return. Preserve missing or unsupported fields as unknown rather than zero. Only make a provider or ingestion decision after that comparison.
