@@ -18,14 +18,14 @@
 | Meteora Dynamic Bonding Curve (DBC) | `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN` | Launch curve, curve trades, and graduation/migration | [Meteora DBC developer guide](https://docs.meteora.ag/developer-guides/dbc/) |
 | Meteora DAMM v1 | `Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB` | Legacy dynamic-AMM pools and activity | [Meteora DAMM v1 SDK](https://github.com/MeteoraAg/damm-v1-sdk) |
 | Meteora DAMM v2 / cp-amm | `cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG` | Constant-product/dynamic-fee pools, including DBC migration destination | [Meteora DAMM v2 developer guide](https://docs.meteora.ag/developer-guides/damm-v2/) |
-| Meteora DLMM | `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo` | Bin-based pools, swaps, and liquidity positions | [Meteora DLMM program/event reference](https://docs.meteora.ag/developer-guides/dlmm/program/events) |
+| Meteora DLMM | `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo` | Bin-based pools, swaps, and liquidity positions | [Meteora DLMM program/event reference](https://github.com/MeteoraAg/docs/blob/main/developer-guides/dlmm/program/events.mdx) |
 | Orca Whirlpools | `whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc` | Concentrated-liquidity pools, swaps, and liquidity positions | [Orca Whirlpools repository](https://github.com/orca-so/whirlpools) |
 | Liquid bonding curve | `LiquidsqH2a9gsPRf1M2QFhFqfLXWYTDZGzbsNQCDux` | Token launch, curve trades, and migration | [Liquid protocol overview](https://docs.liquid.af/protocol/overview); [official IDL/program IDs](https://docs.liquid.af/sdk/idl) |
 | Liquid Swap | `SwapMXcpJdXgnFG9BZak2fBZUiNeR2qYxzexF2ZxdW8` | Graduated CPMM pools, swaps, deposits, and withdrawals | [Liquid protocol overview](https://docs.liquid.af/protocol/overview); [official IDL/program IDs](https://docs.liquid.af/sdk/idl) |
 | MetaDAO Launchpad v0.7 | `moontUzsdepotRGe5xsfip7vLPTJnVuafqdUWexVnPM` | Launchpad program listed as current v0.7 by MetaDAO | [MetaDAO program addresses](https://metadao.com/docs/protocol-analytics) |
 | MetaDAO Futarchy v0.6 | `FUTARELBfJfQ8RDGhg1wdhddq1odMAJUePHFuBYfUxKq` | Futarchy program address listed by MetaDAO for v0.6; verify active deployment/version before using | [MetaDAO program addresses](https://metadao.com/docs/protocol-analytics) |
 
-These rows are a useful first registry, not a complete universe. Liquid and MetaDAO rows are sourced from their respective protocol docs; preserve the published version labels, and verify the current deployment before relying on them. Other protocols, versions, and newly deployed programs may be absent.
+These rows are a useful first registry, not a complete universe. Liquid and MetaDAO rows are sourced from their respective protocol docs; preserve the published version labels, and verify the current deployment before relying on them. The Liquid Swap address is the one documented by Liquid.af; its exact equivalence to any third-party provider's venue label has not been independently checked. Other protocols, versions, and newly deployed programs may be absent.
 
 ## Venue labels are not always program IDs
 
