@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import final
 
 from moybot.app.config import AppConfig, StrategyConfig
+from moybot.app.localization import Language, alert_message
 from moybot.core.action.log_sink import LogAlertSink
 from moybot.core.action.sink_port import ActionSink
 from moybot.core.analysis.registry import HeavyAnalysisRegistry, spec_category_modules
@@ -68,8 +69,9 @@ def build_pipeline(
     snapshot_store: SnapshotStore | None = None,
     provenance_store: ProvenanceStore | None = None,
     data_dir: Path | None = None,
+    language: Language | None = None,
 ) -> Pipeline:
-    """Assemble the Phase 1 pipeline."""
+    """Assemble the Phase 1 pipeline and its selected presentation language."""
     resolved_clock: Clock = clock if clock is not None else SystemClock()
     root = data_dir if data_dir is not None else config.storage.data_dir
     snapshots: SnapshotStore = (
@@ -78,7 +80,12 @@ def build_pipeline(
     provenance: ProvenanceStore = (
         provenance_store if provenance_store is not None else FileProvenanceStore(root)
     )
-    sink: ActionSink = action_sink if action_sink is not None else LogAlertSink()
+    selected_language = language if language is not None else config.display.language
+    sink: ActionSink = (
+        action_sink
+        if action_sink is not None
+        else LogAlertSink(message_formatter=lambda alert: alert_message(alert, selected_language))
+    )
 
     cache = InMemoryStateCache()
     builder = SnapshotBuilder(cache)
