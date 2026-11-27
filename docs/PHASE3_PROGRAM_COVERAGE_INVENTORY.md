@@ -48,11 +48,21 @@ For each row, pin and retain the protocol's current IDL/schema version (reposito
 
 A program-address match by itself is not a decoded trade or a pool event. Anchor instruction discriminators can collide across protocols; always match the program ID and instruction layout together. Preserve raw instruction provenance and unknown fields before normalization.
 
+## Candidate raw transaction fixture (2026-11-27)
+
+[research/fixtures/transactions/meteora-damm-v2-swap-v0-candidate.json](../research/fixtures/transactions/meteora-damm-v2-swap-v0-candidate.json) is an exact copy of a user-provided getTransaction-shaped response. The payload does not identify the RPC endpoint, cluster, or commitment, and no independent chain lookup was performed. Treat it as an **unverified candidate**, not confirmed mainnet-beta coverage. Meteora documents the same DAMM v2 program ID on mainnet-beta and devnet, so matching the program ID cannot establish the cluster ([program IDs](https://github.com/MeteoraAg/damm-v2/blob/8ea1d74d92ea843f0348d6875654ee7fbe765dc5/README.md)).
+
+The response reports slot 474558089, block time 1795784195, transaction version 0, and success. Top-level instruction index 3 invokes the DAMM v2 Swap; its inner event-CPI decodes as EvtSwap2 for pool AvJS1QnhNjNNqaqzh2Eady9XS4QbARrpuSXVW48mz1mf, direction token A → token B, exact-in. The event reports 2,504,224,549 raw input units of token A (6 decimals; Token-2022) and 122 raw output units of wrapped SOL (9 decimals). Schema references are pinned to [Meteora's event.rs at commit 8ea1d74](https://github.com/MeteoraAg/damm-v2/blob/8ea1d74d92ea843f0348d6875654ee7fbe765dc5/programs/cp-amm/src/event.rs) and the [SDK IDL at commit eab5e8a](https://github.com/MeteoraAg/damm-v2-sdk/blob/eab5e8aaa951418db43abbac471d9762b2005f11/src/idl/cp_amm.json); see also the [DAMM v2 event reference](https://github.com/MeteoraAg/docs/blob/main/developer-guides/damm-v2/program/events.mdx).
+
+This is a useful accounting edge case: the transaction creates and closes a temporary WSOL account, charges a 10,000-lamport network fee, includes a separate 5,000-lamport System Program transfer, and returns 122 lamports of swap output. The fee payer's net SOL delta is therefore -14,878 lamports. A decoder that infers the swap only from net SOL balance change would miss or misclassify this trade. Do not assign a purpose to the separate transfer without more provenance.
+
+One transaction does not establish event coverage, venue completeness, a wallet label, or Smart Wallet status. Preserve the original raw response and its unknown provenance until the RPC source, cluster, and commitment can be confirmed.
+
 ## Gaps and next qualification work
 
 1. Confirm the remaining D-013 protocol families and versions against authoritative references; this bounded list does not prove complete venue coverage.
 2. Resolve launchpad-brand-to-config mappings (including any aliases surfaced by the source), separately from the shared program registry.
-3. Build a per-family instruction matrix and collect confirmed transaction signatures for replay; measure which lifecycle events are missed or ambiguous.
+3. Keep the Meteora response as an unverified candidate until its RPC source, cluster, and commitment are confirmed; then collect independently confirmed signatures and per-family instruction fixtures, and measure missed or ambiguous lifecycle events.
 4. Only after source access and D-004 are explicitly resolved, qualify a bounded ingestion path and backfill/reconnect behavior. Public RPC's one-address-per-`logsSubscribe` filter makes the registry size and per-address request/message budget part of that experiment.
 
-No runtime code, API credential, provider selection, event rule, or test was added or authorized by this inventory. D-004 remains in force; D-013 remains the broad offline research scope.
+No runtime code, API credential, provider selection, event rule, or test was added. The sample is a single unverified research fixture, not a coverage claim. D-004 remains in force; D-013 remains the broad offline research scope.
