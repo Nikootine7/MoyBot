@@ -220,6 +220,20 @@ Reasoning: the project owner approved broad all-venue research coverage to avoid
 
 Consequence: D-013 decides research-dataset coverage only. It does not select a production provider, authorize network access, define Bot A/B production venue filters, define Smart Wallet, or introduce event or trading rules. D-004 remains unchanged.
 
+## CLI presentation decisions
+
+### DECISION — D-014 CLI language selection
+
+**Status:** FINAL / DECIDED (current CLI presentation)
+**Approved:** 2026-11-26 by project owner
+
+The current MOYBOT CLI supports English (`en`) and Persian (`fa`) for its human-readable replay summary and alert message. TOML `[display].language` selects the persistent language; `--language` overrides it for one run. English remains the application default to preserve current behavior. The example configuration selects Persian.
+
+Reasoning: the project owner explicitly requested Persian support alongside the existing English interface. Keeping language at the presentation edge adds Persian output without changing pipeline decisions or machine-readable audit data.
+
+Consequence: JSON event names and field keys, decision reason values, metrics, and provenance remain language-neutral. This decision covers the current CLI summary and alert message; it does not define an external alert destination or a future graphical interface.
+
+
 ## OPEN QUESTIONS (not decided)
 
 These remain open and are **not** resolved by anything in this file or in the code. None of them

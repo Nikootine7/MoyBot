@@ -32,11 +32,21 @@ uv run pre-commit install
 Replay a fixture through the whole pipeline:
 
 ```bash
-uv run moybot --fixture tests/fixtures/smart_wallet_buy.json --data-dir ./.moybot-data
+uv run moybot --fixture tests/fixtures/smart_wallet_buy.json --data-dir ./.moybot-data --language fa
 ```
 
 Optionally pass a configuration file (`--config config/pipeline.example.toml`). Snapshots and
 provenance are written as newline-delimited JSON under the data directory.
+
+## Language
+
+The CLI provides English (`en`) and Persian (`fa`) for its human-readable replay summary and
+alert message. English is the application default; set `[display].language = "fa"` in TOML for a
+persistent Persian selection, or pass `--language fa` for one run. The CLI flag overrides the
+config value. The example configuration selects Persian.
+
+The JSON event names and field keys, decision reason values, and provenance stay language-neutral;
+only the human-readable `message` value changes.
 
 ## Checks
 

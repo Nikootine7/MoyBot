@@ -11,6 +11,11 @@ data_dir = "./.moybot-data"
 [logging]
 level = "INFO"
 
+[display]
+# User-facing CLI language: "en" for English or "fa" for Persian.
+# The --language CLI option overrides this value for one run.
+language = "fa"
+
 [heavy_analysis]
 # Heavy-analysis modules are declared-only stubs in Phase 1. Enabling one raises an error
 # instead of returning a fabricated feature. Available names are the PROJECT_SPEC.md §3
