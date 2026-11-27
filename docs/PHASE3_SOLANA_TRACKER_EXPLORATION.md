@@ -126,6 +126,23 @@ D-013's all-venue research scope cannot be inferred from one RPC subscription. T
 
 The [Phase 3 program-coverage inventory](PHASE3_PROGRAM_COVERAGE_INVENTORY.md) records the first mainnet-beta IDL/program set for Pump, Raydium, Meteora, and Orca. It is explicitly incomplete: additional venue families and venue-brand/config aliases still need primary-source mapping. The inventory defines decoder evidence to collect without selecting a provider or relaxing D-004.
 
+## Current bounded token-to-transaction trace (2026-11-27)
+
+Three read-only launchpad requests with `limit=5` returned five rows each: `stage=new` had five `market=pumpfun` rows; `stage=graduating` had five `market=meteora-curve` rows; `stage=graduated` had three `market=meteora-dyn-v2` and two `market=pumpfun-amm` rows. These are three bounded endpoint pages, not a cohort-followed-through-time or a complete venue census. They do not establish a migration rate, launchpad attribution, or exhaustive coverage.
+
+Recent-trade lookups for one sampled Meteora DAMM v2 token and one PumpSwap token returned separate source fields: observed `platform` values included `bloom`, `meteora-dyn-v2`, `pumpfun-app`, `fomo`, `gmgn`, and `pumpfun-amm`. Keep the source-reported `market` and `platform` labels distinct; this sample does not qualify a brand-to-program mapping.
+
+Two returned signatures were inspected through the plugin's read-only transaction tool:
+
+| Sample | Mint | Signature | Slot / block time | Program identified | Parsing returned |
+| --- | --- | --- | --- | --- | --- |
+| Meteora DAMM v2 | `FdcaWeUMzizXWQ3yzdiaaB1vkFC4hj9xadXn4ErhgTu8` | `2X4LMZUAo7vtyotwUJFesYkU3Qnd872mFdKAxuJdQFpiSYp13iXP8rHFYooHnJWW7DcvRk6G9yuLeJpQRb6wSLoA` | `474558089` / `2026-11-27T12:56:35Z` | `cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG` | Success, transaction version 0, and token balance changes; the AMM instruction had `type=null` and `info=null`. |
+| PumpSwap AMM | `2YAfPhCrGSW82Ra33sWgurXt4dQ29SwXusvUXdJGpump` | `2LTHTsJ5kUDrpfeH7s7ZYJqMqch1AF726nJDYQLtSWsHNySDNRGKXzmDYc5WT5PCR8GMVW7tXSAV3X6vWhfSKucb` | `474558078` / `2026-11-27T12:56:32Z` | `pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA` | Success, transaction version 0, and token balance changes; the AMM instruction had `type=null` and `info=null`, with an opaque `Program data` log. |
+
+The wrapper response did not expose the raw transaction/account-key payload, instruction indexes, decoded AMM instruction accounts, or raw integer amount strings for these samples. Its decimal token changes and the opaque log are useful clues, but this response alone is not a deterministic replay fixture or decoder qualification. A replay fixture still needs an authorized raw transaction capture, resolved address-table keys where applicable, and preserved instruction/event identity. Source first-seen time also remains unknown.
+
+This narrows the immediate work: collect representative signatures for each required event family, then obtain a permitted raw capture path before claiming replayable decoder coverage. No runtime network code, provider selection, trading rule, or API credential was introduced; D-004 remains in force.
+
 ## Next research step
 
 Compare candidate sources against a provider-neutral inventory: trade identity and ordering (slot/signature), provider first-seen time, amount units and cost basis, historical depth and pagination, venue coverage, error behavior, freshness/latency evidence, reconnection and backfill, and the information needed to estimate a follower's net return. Preserve missing or unsupported fields as unknown rather than zero. Only make a provider or ingestion decision after that comparison.
